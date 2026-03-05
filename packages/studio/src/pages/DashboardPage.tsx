@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { photoApi, issueApi } from '../api/client';
+import { ProgressChart, StationDistributionChart, QualityTrendChart } from '../components/charts';
 import styles from './DashboardPage.module.css';
 
 interface Stats {
@@ -130,6 +131,21 @@ export default function DashboardPage() {
             </svg>
             <span>问题列表</span>
           </Link>
+        </div>
+      </div>
+
+      <div className="mt-8">
+        <h2 className={styles.sectionTitle}>数据统计</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '16px' }}>
+          <div style={{ background: 'var(--color-bg-card)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: '16px' }}>
+            <ProgressChart />
+          </div>
+          <div style={{ background: 'var(--color-bg-card)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: '16px' }}>
+            <StationDistributionChart />
+          </div>
+        </div>
+        <div style={{ marginTop: '16px', background: 'var(--color-bg-card)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: '16px' }}>
+          <QualityTrendChart />
         </div>
       </div>
     </div>
