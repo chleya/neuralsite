@@ -3,7 +3,6 @@ import './index.css'
 
 // 页面组件
 import VersionCompare from './pages/VersionCompare'
-import LoginPage from './pages/LoginPage'
 import PhotoAIAnnotator from './pages/PhotoAIAnnotator'
 
 // 正确的导入
