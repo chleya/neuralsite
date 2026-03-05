@@ -21,6 +21,8 @@ from api.v1.routes.spatial import router as spatial_router
 from api.v1.routes.spatial_v1 import router as spatial_v1_router
 from api.v1.routes.knowledge_v1 import router as knowledge_v1_router
 from api.v1.routes.dashboard_v1 import router as dashboard_router
+from api.v1.routes.stations import router as stations_router
+from api.v1.routes.cross_sections import router as cross_sections_router
 from core.ai_detection.api import router as ai_detection_router
 
 # P0路由 (照片管理+问题跟踪+离线同步)
@@ -29,6 +31,15 @@ try:
     P0_ROUTES_AVAILABLE = True
 except ImportError:
     P0_ROUTES_AVAILABLE = False
+
+# Project & Route API
+try:
+    from api.v1.projects import router as projects_router
+    from api.v1.route_api import router as routes_router
+    PROJECT_ROUTES_AVAILABLE = True
+except ImportError as e:
+    PROJECT_ROUTES_AVAILABLE = False
+    print(f"Project routes not available: {e}")
 
 # 依赖注入
 from api.dependencies import get_feature_flags, get_settings
@@ -69,12 +80,20 @@ app.include_router(spatial_router)
 app.include_router(spatial_v1_router)
 app.include_router(knowledge_v1_router)
 app.include_router(dashboard_router)
+app.include_router(stations_router)
+app.include_router(cross_sections_router)
 app.include_router(ai_detection_router)
 
 # 注册P0路由 (照片管理+问题跟踪+离线同步)
 if P0_ROUTES_AVAILABLE:
     app.include_router(p0_router)
     print("P0 routes registered")
+
+# 注册Project & Route路由
+if PROJECT_ROUTES_AVAILABLE:
+    app.include_router(projects_router)
+    app.include_router(routes_router)
+    print("Project & Route routes registered")
 
 
 @app.get("/")

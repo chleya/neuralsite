@@ -8,7 +8,6 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
-from passlib.context import CryptContext
 
 from api.deps import get_db, get_current_user
 from models.p0_models import (
@@ -21,7 +20,12 @@ from services.photo_service import PhotoService
 from services.issue_service import IssueService
 
 # 密码加密
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+import bcrypt
+def hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+def verify_password(password: str, hashed: str) -> bool:
+    return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
 
 # 路由前缀
 router = APIRouter(prefix="/api/v1", tags=["P0 - 基础功能"])
@@ -38,7 +42,7 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="用户名已存在")
     
     # 加密密码
-    hashed_password = pwd_context.hash(user.password)
+    hashed_password = hash_password(user.password)
     
     # 创建用户
     db_user = User(
@@ -59,7 +63,7 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
 def login(username: str, password: str, db: Session = Depends(get_db)):
     """用户登录"""
     user = db.query(User).filter(User.username == username).first()
-    if not user or not pwd_context.verify(password, user.password_hash):
+    if not user or not verify_password(password, user.password_hash):
         raise HTTPException(status_code=401, detail="用户名或密码错误")
     
     # TODO: 返回JWT token

@@ -1,0 +1,168 @@
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.backBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.backBtn:hover {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+}
+
+.headerActions {
+  display: flex;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.loading,
+.notFound {
+  text-align: center;
+  padding: 48px;
+  color: var(--color-text-secondary);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.infoCard,
+.routesCard {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: var(--color-text-primary);
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.infoItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.infoLabel {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.infoValue {
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+.description {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border);
+}
+
+.description p {
+  margin-top: 8px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.routesHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.routesHeader .cardTitle {
+  margin-bottom: 0;
+}
+
+.btn-sm {
+  padding: 8px 16px;
+  font-size: 13px;
+}
+
+.emptyRoutes {
+  text-align: center;
+  padding: 32px;
+  color: var(--color-text-muted);
+}
+
+.routesList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.routeItem {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.routeItem:hover {
+  background: var(--color-border);
+}
+
+.routeInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.routeName {
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.routeCode {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.routeLength {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  margin-right: 12px;
+}
+
+.routeItem svg {
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 768px) {
+  .infoGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .headerActions {
+    display: none;
+  }
+}

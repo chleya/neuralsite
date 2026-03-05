@@ -19,7 +19,7 @@ from models.p0_models import Base, User
 # 数据库配置
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://neuralsite:neuralsite@localhost:5432/neuralsite"
+    "postgresql://neuralsite:password@localhost:5432/neuralsite"
 )
 
 # JWT配置 - 生产环境必须修改
