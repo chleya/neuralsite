@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react'
 import './index.css'
 
+// 页面组件
+import VersionCompare from './pages/VersionCompare'
+import LoginPage from './pages/LoginPage'
+import PhotoAIAnnotator from './pages/PhotoAIAnnotator'
+
 // 正确的导入
 import { useUserStore } from './stores/userStore'
 import { useAppStore } from './stores/appStore'
@@ -26,6 +31,7 @@ type Page =
   | 'photo'
   | 'photo-list'
   | 'photo-upload'
+  | 'photo-ai-annotator'
   | 'model' 
   | 'knowledge'
   | 'collision'
@@ -35,6 +41,7 @@ type Page =
   | 'cross-section-entry'
   | 'cross-section-list'
   | 'data-import'
+  | 'version-compare'
 
 const pages: Record<Page, { title: string; icon: string }> = {
   'login': { title: '登录', icon: '[L]' },
@@ -51,6 +58,7 @@ const pages: Record<Page, { title: string; icon: string }> = {
   'photo': { title: '照片浏览', icon: '[Ph]' },
   'photo-list': { title: '照片列表', icon: '[PL]' },
   'photo-upload': { title: '照片上传', icon: '[+Ph]' },
+  'photo-ai-annotator': { title: 'AI标注', icon: '[AI]' },
   'model': { title: '三维模型', icon: '[M]' },
   'knowledge': { title: '知识库', icon: '[K]' },
   'collision': { title: '碰撞检测', icon: '[C]' },
@@ -60,6 +68,7 @@ const pages: Record<Page, { title: string; icon: string }> = {
   'cross-section-entry': { title: '横断面录入', icon: '[X]' },
   'cross-section-list': { title: '横断面列表', icon: '[XL]' },
   'data-import': { title: '数据导入', icon: '[I]' },
+  'version-compare': { title: '版本对比', icon: '[VC]' },
 }
 
 function App() {
@@ -119,6 +128,8 @@ function App() {
         return <PhotoList onNavigate={navigate} {...pageProps} />
       case 'photo-upload':
         return <PhotoUpload onNavigate={navigate} {...pageProps} />
+      case 'photo-ai-annotator':
+        return <PhotoAIAnnotator onNavigate={navigate} {...pageProps} />
       case 'model':
         return <ModelPreviewPage />
       case 'knowledge':
@@ -137,6 +148,8 @@ function App() {
         return <CrossSectionList onNavigate={navigate} {...pageProps} />
       case 'data-import':
         return <DataImport onNavigate={navigate} {...pageProps} />
+      case 'version-compare':
+        return <VersionCompare />
       default:
         return <Dashboard onNavigate={navigate} />
     }

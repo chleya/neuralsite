@@ -1,0 +1,353 @@
+.container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 24px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 8px 0;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #888;
+  margin: 0;
+}
+
+/* 版本选择器 */
+.selectorSection {
+  display: flex;
+  gap: 20px;
+  align-items: flex-end;
+  margin-bottom: 24px;
+  padding: 20px;
+  background: #1a1a2e;
+  border-radius: 12px;
+}
+
+.selector {
+  flex: 1;
+}
+
+.label {
+  display: block;
+  font-size: 14px;
+  color: #aaa;
+  margin-bottom: 8px;
+}
+
+.select {
+  width: 100%;
+  padding: 12px 16px;
+  background: #0f0f1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.select:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+}
+
+.compareBtn,
+.exportBtn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.compareBtn {
+  background: #667eea;
+  color: #fff;
+}
+
+.compareBtn:hover:not(:disabled) {
+  background: #5a6fd6;
+}
+
+.compareBtn:disabled {
+  background: #444;
+  cursor: not-allowed;
+}
+
+.exportBtn {
+  background: #22c55e;
+  color: #fff;
+}
+
+.exportBtn:hover:not(:disabled) {
+  background: #1db954;
+}
+
+.exportBtn:disabled {
+  background: #444;
+  cursor: not-allowed;
+}
+
+/* 统计区域 */
+.statsSection {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.statsCards {
+  display: flex;
+  gap: 16px;
+}
+
+.statCard {
+  flex: 1;
+  padding: 20px;
+  background: #1a1a2e;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.statLabel {
+  display: block;
+  font-size: 14px;
+  color: #888;
+  margin-bottom: 8px;
+}
+
+.statValue {
+  font-size: 36px;
+  font-weight: 600;
+}
+
+.statChanged {
+  color: #3b82f6;
+}
+
+.statAdded {
+  color: #22c55e;
+}
+
+.statRemoved {
+  color: #ef4444;
+}
+
+.chartContainer {
+  background: #1a1a2e;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+/* 差异详情 */
+.diffSection {
+  margin-bottom: 24px;
+}
+
+.sectionTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 16px 0;
+}
+
+.diffCard {
+  background: #1a1a2e;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.diffCardTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+  padding: 16px 20px;
+  background: #252540;
+  border-bottom: 1px solid #333;
+}
+
+.diffFields {
+  padding: 16px 20px;
+}
+
+.diffField {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  transition: background 0.2s;
+}
+
+.diffField:last-child {
+  margin-bottom: 0;
+}
+
+.diffField:hover {
+  background: #252540;
+}
+
+.diffField.changed {
+  border-left: 3px solid #3b82f6;
+}
+
+.diffField.added {
+  border-left: 3px solid #22c55e;
+}
+
+.diffField.removed {
+  border-left: 3px solid #ef4444;
+}
+
+.fieldName {
+  flex: 0 0 200px;
+  font-size: 14px;
+  color: #aaa;
+}
+
+.fieldValues {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.oldValue {
+  color: #ef4444;
+  font-family: monospace;
+  font-size: 13px;
+}
+
+.newValue {
+  color: #22c55e;
+  font-family: monospace;
+  font-size: 13px;
+}
+
+.arrow {
+  color: #666;
+}
+
+.diffType {
+  flex: 0 0 60px;
+  font-size: 12px;
+  text-align: center;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.diffField.changed .diffType {
+  background: rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+}
+
+.diffField.added .diffType {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+}
+
+.diffField.removed .diffType {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+/* 空状态 */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  color: #666;
+}
+
+.emptyState svg {
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.emptyState p {
+  font-size: 16px;
+  margin: 0;
+}
+
+/* 加载状态 */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  color: #888;
+  font-size: 16px;
+}
+
+/* 响应式 */
+@media (max-width: 1024px) {
+  .selectorSection {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .statsSection {
+    grid-template-columns: 1fr;
+  }
+
+  .statsCards {
+    flex-direction: column;
+  }
+
+  .fieldName {
+    flex: 0 0 120px;
+  }
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: 16px;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .diffField {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .fieldName {
+    flex: 1;
+  }
+
+  .fieldValues {
+    flex-wrap: wrap;
+  }
+
+  .diffType {
+    flex: 0;
+  }
+}
