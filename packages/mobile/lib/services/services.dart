@@ -3,6 +3,7 @@ export 'api_service.dart';
 export 'sync_service.dart';
 export 'background_sync_service.dart';
 export 'offline_cache_service.dart';
+export 'offline_sync.dart';
 export 'location_service.dart';
 export 'camera_service.dart';
 export 'dashboard_service.dart';
