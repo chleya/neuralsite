@@ -363,7 +363,7 @@ class SyncService {
       for (int i = uploadedChunks; i < upload.totalChunks; i++) {
         if (!_isOnline) break;
         
-        await randomAccess * uploadFile.setPosition(i.chunkSize);
+        await randomAccessFile.setPosition(i * upload.chunkSize);
         final chunk = await randomAccessFile.read(upload.chunkSize);
         
         // Upload chunk

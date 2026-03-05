@@ -22,6 +22,7 @@ interface AppState {
   // Project context
   currentProjectId: string | null;
   currentProjectName: string | null;
+  selectedProject: string | null;
 
   // Actions
   toggleSidebar: () => void;
@@ -32,6 +33,7 @@ interface AppState {
   removeNotification: (id: string) => void;
   clearNotifications: () => void;
   setCurrentProject: (projectId: string | null, projectName?: string | null) => void;
+  setSelectedProject: (projectId: string | null) => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -46,6 +48,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   // Project context
   currentProjectId: null,
   currentProjectName: null,
+  selectedProject: null,
 
   // Toggle sidebar
   toggleSidebar: () => {
@@ -114,6 +117,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       currentProjectId: projectId,
       currentProjectName: projectName,
     });
+  },
+
+  // Set selected project
+  setSelectedProject: (projectId: string | null) => {
+    set({ selectedProject: projectId });
   },
 }));
 
