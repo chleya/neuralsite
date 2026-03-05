@@ -74,7 +74,7 @@ app.include_router(ai_detection_router)
 # 注册P0路由 (照片管理+问题跟踪+离线同步)
 if P0_ROUTES_AVAILABLE:
     app.include_router(p0_router)
-    print("✓ P0 routes registered")
+    print("P0 routes registered")
 
 
 @app.get("/")

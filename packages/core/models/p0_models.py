@@ -136,7 +136,7 @@ class IssueBase(BaseModel):
     issue_type: IssueType
     title: str
     description: Optional[str] = None
-    severity: IssueSeverity = IssueSeverity.MEDIUM
+    severity: IssueSeverity = IssueSeverity.MINOR
 
 
 class IssueCreate(IssueBase):
