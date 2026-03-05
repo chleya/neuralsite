@@ -22,10 +22,10 @@ DATABASE_URL = os.getenv(
     "postgresql://neuralsite:neuralsite@localhost:5432/neuralsite"
 )
 
-# JWT配置
-SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
+# JWT配置 - 生产环境必须修改
+SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24小时
+ACCESS_TOKEN_EXPIRE_MINUTES = 30  # 生产环境建议30分钟
 
 # ==================== 数据库引擎 ====================
 

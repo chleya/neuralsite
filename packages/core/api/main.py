@@ -23,6 +23,13 @@ from api.v1.routes.knowledge_v1 import router as knowledge_v1_router
 from api.v1.routes.dashboard_v1 import router as dashboard_router
 from core.ai_detection.api import router as ai_detection_router
 
+# P0路由 (照片管理+问题跟踪+离线同步)
+try:
+    from api.v1.p0_routes import router as p0_router
+    P0_ROUTES_AVAILABLE = True
+except ImportError:
+    P0_ROUTES_AVAILABLE = False
+
 # 依赖注入
 from api.dependencies import get_feature_flags, get_settings
 
@@ -36,10 +43,12 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# CORS - 允许所有来源
+# CORS - 生产环境应配置具体域名
+import os
+cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -61,6 +70,11 @@ app.include_router(spatial_v1_router)
 app.include_router(knowledge_v1_router)
 app.include_router(dashboard_router)
 app.include_router(ai_detection_router)
+
+# 注册P0路由 (照片管理+问题跟踪+离线同步)
+if P0_ROUTES_AVAILABLE:
+    app.include_router(p0_router)
+    print("✓ P0 routes registered")
 
 
 @app.get("/")
