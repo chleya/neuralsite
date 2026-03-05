@@ -24,6 +24,7 @@ from api.v1.routes.dashboard_v1 import router as dashboard_router
 from api.v1.routes.stations import router as stations_router
 from api.v1.routes.cross_sections import router as cross_sections_router
 from api.v1.routes.spatial_api import router as spatial_api_router
+from api.v1.routes.qa_api import router as qa_router
 from core.ai_detection.api import router as ai_detection_router
 
 # P0路由 (照片管理+问题跟踪+离线同步)
@@ -84,6 +85,7 @@ app.include_router(dashboard_router)
 app.include_router(stations_router)
 app.include_router(cross_sections_router)
 app.include_router(spatial_api_router)
+app.include_router(qa_router)
 app.include_router(ai_detection_router)
 
 # 注册P0路由 (照片管理+问题跟踪+离线同步)

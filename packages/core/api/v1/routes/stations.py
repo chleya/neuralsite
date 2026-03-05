@@ -24,7 +24,154 @@ from models.station import (
 router = APIRouter(prefix="/api/v1/stations", tags=["Station - 桩号管理"])
 
 
-# ==================== 桩号管理 ====================
+# ==================== 辅助函数 ====================
+
+def parse_station(station_str: str) -> float:
+    """解析桩号字符串为米"""
+    station_str = str(station_str).strip().upper()
+    match = re.match(r'^K?(\d+)\+(\d+(?:\.\d+)?)$', station_str)
+    if match:
+        km = int(match.group(1))
+        m = float(match.group(2))
+        return km * 1000 + m
+    match = re.match(r'^K?(\d+(?:\.\d+)?)$', station_str)
+    if match:
+        return float(match.group(1))
+    raise ValueError(f"Invalid station format: {station_str}")
+
+
+# ==================== Pydantic 响应模型 ====================
+
+class StationRangeResponse(BaseModel):
+    """桩号范围查询响应"""
+    start: float
+    end: float
+    count: int
+    coordinates: List[dict]
+
+
+class NearestStationResponse(BaseModel):
+    """最近桩号查询响应"""
+    station: float
+    station_display: str
+    distance: float
+    easting: float
+    northing: float
+    elevation: Optional[float] = None
+
+
+# ==================== 空间计算API (PostgreSQL) ====================
+# 这些路由必须在参数化路由之前定义
+
+# 1. 桩号查坐标
+@router.get("/{station}/coordinates")
+def get_coordinates_by_station(
+    station: str,
+    station_system_id: Optional[str] = Query(None, description="桩号系统ID"),
+    db: Session = Depends(get_db)
+):
+    """桩号查坐标，支持 K0+500 格式"""
+    try:
+        station_m = parse_station(station)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    sql = text("""
+        SELECT station, station_display, easting, northing, elevation, azimuth
+        FROM station_coordinate_mapping
+        WHERE station = :station_m
+    """)
+    
+    result = db.execute(sql, {"station_m": station_m}).fetchone()
+    
+    if not result:
+        raise HTTPException(status_code=404, detail=f"桩号 {station} 不存在")
+    
+    return {
+        "station": station,
+        "station_m": station_m,
+        "easting": float(result.easting),
+        "northing": float(result.northing),
+        "elevation": float(result.elevation) if result.elevation else None,
+        "azimuth": float(result.azimuth) if result.azimuth else 0.0
+    }
+
+
+# 2. 桩号范围查询
+@router.get("/range/coordinates", response_model=StationRangeResponse)
+def get_coordinates_by_range(
+    start: str = Query(..., description="起始桩号，如 K0+0"),
+    end: str = Query(..., description="结束桩号，如 K1+0"),
+    station_system_id: Optional[str] = Query(None, description="桩号系统ID"),
+    db: Session = Depends(get_db)
+):
+    """桩号范围查坐标序列"""
+    try:
+        start_m = parse_station(start)
+        end_m = parse_station(end)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    sql = text("""
+        SELECT station, station_display, easting, northing, elevation
+        FROM station_coordinate_mapping
+        WHERE station >= :start_m AND station <= :end_m
+        ORDER BY station
+    """)
+    params = {"start_m": start_m, "end_m": end_m}
+    
+    result = db.execute(sql, params).fetchall()
+    
+    return StationRangeResponse(
+        start=start_m,
+        end=end_m,
+        count=len(result),
+        coordinates=[
+            {
+                "station": float(r.station),
+                "station_display": r.station_display,
+                "easting": float(r.easting),
+                "northing": float(r.northing),
+                "elevation": float(r.elevation) if r.elevation else None
+            }
+            for r in result
+        ]
+    )
+
+
+# 3. 坐标查最近桩号
+@router.get("/nearest", response_model=NearestStationResponse)
+def get_nearest_station(
+    x: float = Query(..., description="X坐标(东向)"),
+    y: float = Query(..., description="Y坐标(北向)"),
+    station_system_id: Optional[str] = Query(None, description="桩号系统ID"),
+    db: Session = Depends(get_db)
+):
+    """坐标查最近桩号"""
+    sql = text("""
+        SELECT station, station_display, easting, northing, elevation,
+            SQRT(POWER(easting - :x, 2) + POWER(northing - :y, 2)) as distance
+        FROM station_coordinate_mapping
+        WHERE easting IS NOT NULL AND northing IS NOT NULL
+        ORDER BY distance LIMIT 1
+    """)
+    
+    result = db.execute(sql, {"x": x, "y": y}).fetchone()
+    
+    if not result:
+        raise HTTPException(status_code=404, detail="未找到附近的桩号点")
+    
+    return NearestStationResponse(
+        station=float(result.station),
+        station_display=result.station_display,
+        distance=float(result.distance),
+        easting=float(result.easting),
+        northing=float(result.northing),
+        elevation=float(result.elevation) if result.elevation else None
+    )
+
+
+# ==================== 旧版桩号管理API ====================
 
 @router.post("", response_model=StationResponse, status_code=status.HTTP_201_CREATED)
 def create_station(
@@ -33,9 +180,6 @@ def create_station(
     current_user: CurrentUser = Depends(get_current_user)
 ):
     """创建桩号"""
-    # 检查route是否存在
-    # 注意: 这里简化处理,实际应验证route_id
-    
     db_station = Station(
         project_id=station.project_id,
         route_id=station.route_id,
@@ -111,10 +255,8 @@ def update_station(
     if not db_station:
         raise HTTPException(status_code=404, detail="桩号不存在")
     
-    # 更新字段
     update_data = station.model_dump(exclude_unset=True)
     
-    # 处理枚举类型
     if 'station_type' in update_data and update_data['station_type']:
         val = update_data['station_type']
         update_data['station_type'] = val.value if hasattr(val, 'value') else val
@@ -144,183 +286,6 @@ def delete_station(
     db.delete(station)
     db.commit()
     return None
-
-
-@router.get("/{station}/coordinates", response_model=StationCoordinatesResponse)
-def get_station_coordinates(
-    station: float,
-    project_id: Optional[uuid.UUID] = Query(None, description="项目ID"),
-    route_id: Optional[uuid.UUID] = Query(None, description="路线ID"),
-    db: Session = Depends(get_db)
-):
-    """根据桩号查询坐标"""
-    query = db.query(Station).filter(Station.station == station)
-    
-    if project_id:
-        query = query.filter(Station.project_id == project_id)
-    if route_id:
-        query = query.filter(Station.route_id == route_id)
-    
-    db_station = query.first()
-    if not db_station:
-        raise HTTPException(status_code=404, detail=f"桩号 {station} 不存在")
-    
-    return StationCoordinatesResponse(
-        station=db_station.station,
-        station_display=db_station.station_display,
-        route_id=db_station.route_id,
-        project_id=db_station.project_id,
-        longitude=db_station.longitude,
-        latitude=db_station.latitude,
-        elevation=db_station.elevation,
-        x=db_station.x,
-        y=db_station.y,
-        z=db_station.z
-    )
-
-
-# ==================== 辅助函数 ====================
-
-def parse_station(station_str: str) -> float:
-    """解析桩号字符串为米"""
-    station_str = str(station_str).strip().upper()
-    match = re.match(r'^K?(\d+)\+(\d+(?:\.\d+)?)$', station_str)
-    if match:
-        km = int(match.group(1))
-        m = float(match.group(2))
-        return km * 1000 + m
-    match = re.match(r'^K?(\d+(?:\.\d+)?)$', station_str)
-    if match:
-        return float(match.group(1))
-    raise ValueError(f"Invalid station format: {station_str}")
-
-
-# ==================== 空间计算API (PostgreSQL) ====================
-
-class StationRangeResponse(BaseModel):
-    """桩号范围查询响应"""
-    start: float
-    end: float
-    count: int
-    coordinates: List[dict]
-
-
-class NearestStationResponse(BaseModel):
-    """最近桩号查询响应"""
-    station: float
-    station_display: str
-    distance: float
-    easting: float
-    northing: float
-    elevation: Optional[float] = None
-
-
-# 2. 桩号范围查询 (PostgreSQL)
-@router.get("/range/coordinates", response_model=StationRangeResponse)
-def get_coordinates_by_range(
-    start: str = Query(..., description="起始桩号，如 K0+0"),
-    end: str = Query(..., description="结束桩号，如 K1+0"),
-    station_system_id: Optional[str] = Query(None, description="桩号系统ID"),
-    db: Session = Depends(get_db)
-):
-    """桩号范围查坐标序列"""
-    try:
-        start_m = parse_station(start)
-        end_m = parse_station(end)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    
-    sql = text("""
-        SELECT station, station_display, easting, northing, elevation
-        FROM station_coordinate_mapping
-        WHERE station >= :start_m AND station <= :end_m
-        ORDER BY station
-    """)
-    params = {"start_m": start_m, "end_m": end_m}
-    
-    result = db.execute(sql, params).fetchall()
-    
-    return StationRangeResponse(
-        start=start_m,
-        end=end_m,
-        count=len(result),
-        coordinates=[
-            {
-                "station": float(r.station),
-                "station_display": r.station_display,
-                "easting": float(r.easting),
-                "northing": float(r.northing),
-                "elevation": float(r.elevation) if r.elevation else None
-            }
-            for r in result
-        ]
-    )
-
-
-# 3. 坐标查最近桩号 (PostgreSQL)
-@router.get("/nearest", response_model=NearestStationResponse)
-def get_nearest_station(
-    x: float = Query(..., description="X坐标(东向)"),
-    y: float = Query(..., description="Y坐标(北向)"),
-    station_system_id: Optional[str] = Query(None, description="桩号系统ID"),
-    db: Session = Depends(get_db)
-):
-    """坐标查最近桩号"""
-    sql = text("""
-        SELECT station, station_display, easting, northing, elevation,
-            SQRT(POWER(easting - :x, 2) + POWER(northing - :y, 2)) as distance
-        FROM station_coordinate_mapping
-        WHERE easting IS NOT NULL AND northing IS NOT NULL
-        ORDER BY distance LIMIT 1
-    """)
-    
-    result = db.execute(sql, {"x": x, "y": y}).fetchone()
-    
-    if not result:
-        raise HTTPException(status_code=404, detail="未找到附近的桩号点")
-    
-    return NearestStationResponse(
-        station=float(result.station),
-        station_display=result.station_display,
-        distance=float(result.distance),
-        easting=float(result.easting),
-        northing=float(result.northing),
-        elevation=float(result.elevation) if result.elevation else None
-    )
-
-
-# 4. 桩号查坐标 (PostgreSQL)
-@router.get("/{station}/coordinates")
-def get_coordinates_by_station(
-    station: str,
-    station_system_id: Optional[str] = Query(None, description="桩号系统ID"),
-    db: Session = Depends(get_db)
-):
-    """桩号查坐标，支持 K0+500 格式"""
-    try:
-        station_m = parse_station(station)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    
-    sql = text("""
-        SELECT station, station_display, easting, northing, elevation, azimuth
-        FROM station_coordinate_mapping
-        WHERE station = :station_m
-    """)
-    
-    result = db.execute(sql, {"station_m": station_m}).fetchone()
-    
-    if not result:
-        raise HTTPException(status_code=404, detail=f"桩号 {station} 不存在")
-    
-    return {
-        "station": station,
-        "station_m": station_m,
-        "easting": float(result.easting),
-        "northing": float(result.northing),
-        "elevation": float(result.elevation) if result.elevation else None,
-        "azimuth": float(result.azimuth) if result.azimuth else 0.0
-    }
 
 
 # ==================== 批量操作 ====================

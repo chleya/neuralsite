@@ -41,7 +41,7 @@ class DefectType(Enum):
 class ClassificationResult:
     """分类结果"""
     category: PhotoCategory
-_confidence: float    category  # 0-1
+    category_confidence: float  # 0-1
     defects: List[Dict[str, Any]]  # [{"type": DefectType, "confidence": float, "location": str, "severity": str}]
     overall_confidence: float  # 整体置信度
     description: str  # 描述
