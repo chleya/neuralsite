@@ -1,0 +1,9 @@
+node_modules/
+.dart_tool/
+build/
+dist/
+.next/
+pycache/
+*.log
+*.lock
+coverage/

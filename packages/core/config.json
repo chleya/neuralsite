@@ -1,0 +1,56 @@
+{
+    "api_host": "0.0.0.0",
+    "api_port": 8000,
+    "api_debug": false,
+    "db_path": "neuralsite.db",
+    "db_echo": false,
+    "engine_cache_enabled": true,
+    "engine_max_cache_size": 100,
+    "default_route": {
+        "route_id": "default",
+        "design_speed": 80,
+        "horizontal_alignment": [
+            {
+                "element_type": "直线",
+                "start_station": "K0+000",
+                "end_station": "K0+500",
+                "azimuth": 45,
+                "x0": 500000,
+                "y0": 3000000
+            },
+            {
+                "element_type": "缓和曲线",
+                "start_station": "K0+500",
+                "end_station": "K0+600",
+                "azimuth": 45,
+                "x0": 500353.553,
+                "y0": 3000353.553,
+                "A": 300,
+                "R": 800,
+                "direction": "右"
+            },
+            {
+                "element_type": "圆曲线",
+                "start_station": "K0+600",
+                "end_station": "K1+200",
+                "azimuth": 45,
+                "x0": 500424.264,
+                "y0": 3000424.264,
+                "R": 800,
+                "cx": 500424.264,
+                "cy": 3000224.264,
+                "direction": "右"
+            }
+        ],
+        "vertical_alignment": [
+            {"station": "K0+000", "elevation": 100, "grade_out": 20},
+            {"station": "K0+500", "elevation": 110, "grade_in": 20, "grade_out": -15, "length": 200},
+            {"station": "K1+200", "elevation": 99.5, "grade_in": -15}
+        ],
+        "cross_section_template": {
+            "width": 26,
+            "lanes": 4,
+            "crown_slope": 2.0
+        }
+    }
+}

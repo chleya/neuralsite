@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # Neo4j Database
+  neo4j:
+    image: neo4j:5
+    container_name: neuralsite-neo4j
+    environment:
+      - NEO4J_AUTH=neo4j/password
+      - NEO4J_PLUGINS=["apoc"]
+    ports:
+      - "7474:7474"  # Neo4j Browser
+      - "7687:7687"  # Bolt Protocol
+    volumes:
+      - neo4j_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider localhost:7474 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # NeuralSite Core API
+  api:
+    build: 
+      context: ./neuralsite-core
+      dockerfile: Dockerfile
+    container_name: neuralsite-api
+    ports:
+      - "8000:8000"
+    environment:
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=password
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./neuralsite-core:/app
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # NeuralSite Studio (Frontend)
+  web:
+    image: node:18-alpine
+    container_name: neuralsite-web
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --host --port 5173"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./neuralsite-studio:/app
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  neo4j_data:

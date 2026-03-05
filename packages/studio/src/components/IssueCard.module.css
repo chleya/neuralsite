@@ -1,0 +1,148 @@
+.card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  transition: all var(--transition-fast);
+}
+
+.card:hover {
+  border-color: var(--color-border-light);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.badges {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.status,
+.priority {
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+}
+
+.statusOpen {
+  background: rgba(251, 191, 36, 0.15);
+  color: var(--color-warning);
+}
+
+.statusProgress {
+  background: rgba(79, 140, 255, 0.15);
+  color: var(--color-accent);
+}
+
+.statusResolved {
+  background: rgba(52, 211, 153, 0.15);
+  color: var(--color-success);
+}
+
+.statusClosed {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-muted);
+}
+
+.priorityLow {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-muted);
+}
+
+.priorityMedium {
+  background: rgba(79, 140, 255, 0.15);
+  color: var(--color-accent);
+}
+
+.priorityHigh {
+  background: rgba(251, 191, 36, 0.15);
+  color: var(--color-warning);
+}
+
+.priorityCritical {
+  background: rgba(248, 113, 113, 0.15);
+  color: var(--color-error);
+}
+
+.description {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin-bottom: 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.photos {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.photoThumb {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--color-bg-tertiary);
+}
+
+.photoThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.morePhotos {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+.time {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.deleteBtn {
+  padding: 6px 12px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.deleteBtn:hover {
+  background: rgba(248, 113, 113, 0.15);
+  color: var(--color-error);
+}

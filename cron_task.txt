@@ -1,0 +1,9 @@
+CONTINUOUS MODE - NeuralSite:
+1.检查打断->优先处理
+2.无打断->检查任务:有任务+token足->循环(规划->改代码->测试->PR)
+3.完成后执行 openclaw cron wake 继续
+4.无任务或token不足->HEARTBEAT_OK
+项目:F:/neuralsite_monorepo
+组成:core(FastAPI),studio(React),mobile(Flutter)
+PR加[AUTO],分支auto/xxx
+7重防护:1.Token防护 2.严禁安装依赖 3.严禁毁灭命令 4.遵守ARCHITECTURE.md 5.固定测试命令 6.最多重试3次 7.触发防护立即暂停

@@ -1,0 +1,26 @@
+.dart_tool/
+.packages
+.pub/
+build/
+.idea/
+.vscode/
+*.iml
+*.lock
+.dart_version
+.fvm/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+pubspec.lock
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Android
+android/app/build
+android/.gradle
+
+# iOS
+ios/Pods/
+ios/.symlinks

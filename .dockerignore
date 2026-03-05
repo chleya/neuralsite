@@ -1,0 +1,84 @@
+# =============================================================================
+# NeuralSite Docker Ignore
+# =============================================================================
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+pip-log.txt
+pip-delete-this-directory.txt
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Documentation
+*.md
+!requirements.txt
+docs/
+LICENSE
+
+# Local config
+.env
+.env.local
+.env.*.local
+*.env
+
+# Development files
+docker-compose.yml
+docker-compose.dev.yml
+Dockerfile.dev
+Makefile
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+.cache/
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+
+# Media
+uploads/*
+!uploads/.gitkeep
+
+# Node (if any)
+node_modules/
+package-lock.json
+yarn.lock

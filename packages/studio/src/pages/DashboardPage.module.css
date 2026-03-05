@@ -1,0 +1,125 @@
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.statCard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  color: inherit;
+  transition: all var(--transition-fast);
+}
+
+.statCard:hover {
+  border-color: var(--color-accent);
+  transform: translateY(-2px);
+}
+
+.statIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  background: rgba(79, 140, 255, 0.1);
+  color: var(--color-accent);
+}
+
+.issueIcon {
+  background: rgba(251, 191, 36, 0.1);
+  color: var(--color-warning);
+}
+
+.criticalIcon {
+  background: rgba(248, 113, 113, 0.1);
+  color: var(--color-error);
+}
+
+.totalIcon {
+  background: rgba(52, 211, 153, 0.1);
+  color: var(--color-success);
+}
+
+.statContent {
+  display: flex;
+  flex-direction: column;
+}
+
+.statValue {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.statLabel {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-top: 4px;
+}
+
+.sectionTitle {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.quickActions {
+  margin-top: 32px;
+}
+
+.actionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.actionCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  color: var(--color-text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.actionCard:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.actionCard span {
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .actionGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .actionCard {
+    padding: 16px;
+  }
+
+  .actionCard svg {
+    width: 24px;
+    height: 24px;
+  }
+}
