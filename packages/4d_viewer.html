@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuralSite 4D 施工模拟</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #1a1a2e; color: #fff; }
+        
+        #container { width: 100vw; height: 70vh; }
+        
+        #timeline-panel {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: linear-gradient(180deg, #16213e 0%, #0f3460 100%);
+            padding: 20px; border-top: 2px solid #e94560;
+        }
+        
+        #date-display {
+            text-align: center; font-size: 24px; margin-bottom: 10px;
+            color: #e94560; font-weight: bold;
+        }
+        
+        #timeline-slider {
+            width: 100%; height: 30px; cursor: pointer;
+        }
+        
+        #task-list {
+            position: fixed; top: 10px; right: 10px;
+            background: rgba(0,0,0,0.7); padding: 15px;
+            border-radius: 8px; max-width: 250px;
+        }
+        
+        #task-list h3 { color: #e94560; margin-bottom: 10px; }
+        
+        .task-item {
+            padding: 8px; margin: 5px 0;
+            background: #16213e; border-radius: 4px;
+            border-left: 3px solid #4a4a4a;
+            transition: all 0.3s;
+        }
+        
+        .task-item.active {
+            border-left-color: #e94560;
+            background: #1a1a2e;
+            transform: translateX(5px);
+        }
+        
+        .task-item.completed {
+            border-left-color: #4caf50;
+            opacity: 0.7;
+        }
+        
+        #info-panel {
+            position: fixed; top: 10px; left: 10px;
+            background: rgba(0,0,0,0.7); padding: 15px;
+            border-radius: 8px;
+        }
+        
+        #info-panel h2 { color: #e94560; margin-bottom: 10px; }
+        
+        .progress-bar {
+            width: 100%; height: 8px; background: #333;
+            border-radius: 4px; margin-top: 5px;
+        }
+        
+        .progress-fill {
+            height: 100%; background: linear-gradient(90deg, #e94560, #ff6b6b);
+            border-radius: 4px; transition: width 0.3s;
+        }
+        
+        #loading {
+            position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px; color: #e94560;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">加载中...</div>
+    <div id="container"></div>
+    
+    <div id="info-panel">
+        <h2>🚧 施工进度</h2>
+        <div id="project-name">-</div>
+        <div id="overall-progress">
+            <span>总体进度: </span><span id="progress-text">0%</span>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="task-list">
+        <h3>📋 施工任务</h3>
+        <div id="tasks"></div>
+    </div>
+    
+    <div id="timeline-panel">
+        <div id="date-display">2026-03-01</div>
+        <input type="range" id="timeline-slider" min="0" max="100" value="0">
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/three@0.150.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.150.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <script>
+        // 4D Schedule Data (从IFC导出)
+        const scheduleData = {
+            project: { name: "K0+000-K5+000 高速公路施工" },
+            tasks: [
+                { id: 2, name: "施工准备", start: "2026-03-01", end: "2026-03-16", duration_days: 15 },
+                { id: 3, name: "路基填筑", start: "2026-03-16", end: "2026-04-15", duration_days: 30 },
+                { id: 4, name: "基层摊铺", start: "2026-04-28", end: "2026-05-28", duration_days: 30 },
+                { id: 5, name: "面层施工", start: "2026-04-28", end: "2026-05-23", duration_days: 25 },
+                { id: 6, name: "附属工程", start: "2026-05-28", end: "2026-06-17", duration_days: 20 }
+            ]
+        };
+
+        // Three.js 场景
+        let scene, camera, renderer, controls;
+        let roadSegments = [];
+        let currentDate = new Date('2026-03-01');
+        
+        // 日期范围
+        const startDate = new Date('2026-03-01');
+        const endDate = new Date('2026-06-30');
+        const totalDays = (endDate - startDate) / (1000 * 60 * 60 * 24);
+        
+        function init() {
+            // 场景
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a2e);
+            scene.fog = new THREE.Fog(0x1a1a2e, 50, 200);
+            
+            // 相机
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(30, 20, 30);
+            
+            // 渲染器
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight * 0.7);
+            document.getElementById('container').appendChild(renderer.domElement);
+            
+            // 控制器
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            
+            // 灯光
+            const ambient = new THREE.AmbientLight(0x404040, 2);
+            scene.add(ambient);
+            
+            const directional = new THREE.DirectionalLight(0xffffff, 1);
+            directional.position.set(10, 20, 10);
+            scene.add(directional);
+            
+            // 创建道路段
+            createRoadSegments();
+            
+            // 创建地面
+            createGround();
+            
+            // 隐藏加载
+            document.getElementById('loading').style.display = 'none';
+            
+            // 更新UI
+            updateUI();
+            
+            // 开始渲染
+            animate();
+        }
+        
+        function createRoadSegments() {
+            const taskCount = scheduleData.tasks.length;
+            
+            scheduleData.tasks.forEach((task, index) => {
+                // 路段位置（沿X轴分布）
+                const x = (index - taskCount / 2) * 10 + 5;
+                const length = 8;
+                const width = 4;
+                const height = 0.5 + index * 0.2; // 随施工进度增高
+                
+                // 创建道路几何体
+                const geometry = new THREE.BoxGeometry(length, height, width);
+                
+                // 材质 - 根据任务状态
+                const color = getTaskColor(task, currentDate);
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: color,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.set(x, height / 2, 0);
+                mesh.userData = { task: task, index: index };
+                
+                scene.add(mesh);
+                roadSegments.push(mesh);
+                
+                // 添加标签
+                addLabel(task.name, x, height + 1, 0);
+            });
+        }
+        
+        function createGround() {
+            const geometry = new THREE.PlaneGeometry(200, 200);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: 0x0f3460,
+                side: THREE.DoubleSide
+            });
+            const ground = new THREE.Mesh(geometry, material);
+            ground.rotation.x = -Math.PI / 2;
+            ground.position.y = -0.1;
+            scene.add(ground);
+            
+            // 网格
+            const grid = new THREE.GridHelper(200, 50, 0x333333, 0x222222);
+            scene.add(grid);
+        }
+        
+        function addLabel(text, x, y, z) {
+            // 简单文字效果（用平面方块代表）
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '24px Microsoft YaHei';
+            ctx.textAlign = 'center';
+            ctx.fillText(text, 128, 40);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            const material = new THREE.SpriteMaterial({ map: texture });
+            const sprite = new THREE.Sprite(material);
+            sprite.position.set(x, y, z);
+            sprite.scale.set(8, 2, 1);
+            scene.add(sprite);
+        }
+        
+        function getTaskColor(task, currentDate) {
+            const taskStart = new Date(task.start);
+            const taskEnd = new Date(task.end);
+            
+            if (currentDate < taskStart) {
+                return 0x4a4a4a; // 未开始 - 灰色
+            } else if (currentDate > taskEnd) {
+                return 0x4caf50; // 已完成 - 绿色
+            } else {
+                // 施工中 - 红色渐变
+                const progress = (currentDate - taskStart) / (taskEnd - taskStart);
+                return progress < 0.5 ? 0xe94560 : 0xff6b6b;
+            }
+        }
+        
+        function updateScene() {
+            roadSegments.forEach(mesh => {
+                const task = mesh.userData.task;
+                const color = getTaskColor(task, currentDate);
+                mesh.material.color.setHex(color);
+                
+                // 根据进度调整高度
+                const taskStart = new Date(task.start);
+                const taskEnd = new Date(task.end);
+                
+                if (currentDate >= taskStart) {
+                    const progress = Math.min(1, (currentDate - taskStart) / (taskEnd - taskStart));
+                    const baseHeight = 0.5 + mesh.userData.index * 0.2;
+                    mesh.scale.y = 0.1 + progress * 0.9;
+                    mesh.position.y = (baseHeight * mesh.scale.y) / 2;
+                }
+            });
+        }
+        
+        function updateUI() {
+            // 更新日期显示
+            document.getElementById('date-display').textContent = 
+                currentDate.toISOString().split('T')[0];
+            
+            // 更新项目名
+            document.getElementById('project-name').textContent = 
+                scheduleData.project.name;
+            
+            // 更新任务列表
+            const tasksDiv = document.getElementById('tasks');
+            let completedCount = 0;
+            
+            tasksDiv.innerHTML = scheduleData.tasks.map(task => {
+                const status = getTaskStatus(task, currentDate);
+                if (status === 'completed') completedCount++;
+                
+                return `<div class="task-item ${status}">
+                    <div>${task.name}</div>
+                    <div style="font-size:12px;color:#888">
+                        ${task.start} ~ ${task.end}
+                    </div>
+                </div>`;
+            }).join('');
+            
+            // 更新总体进度
+            const progress = Math.round((completedCount / scheduleData.tasks.length) * 100);
+            document.getElementById('progress-text').textContent = progress + '%';
+            document.getElementById('progress-fill').style.width = progress + '%';
+        }
+        
+        function getTaskStatus(task, currentDate) {
+            const taskStart = new Date(task.start);
+            const taskEnd = new Date(task.end);
+            
+            if (currentDate < taskStart) return 'pending';
+            if (currentDate > taskEnd) return 'completed';
+            return 'active';
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        // 滑块事件
+        document.getElementById('timeline-slider').addEventListener('input', (e) => {
+            const dayOffset = Math.floor((e.target.value / 100) * totalDays);
+            currentDate = new Date(startDate.getTime() + dayOffset * 24 * 60 * 60 * 1000);
+            
+            updateScene();
+            updateUI();
+        });
+        
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / (window.innerHeight * 0.7);
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight * 0.7);
+        });
+        
+        // 初始化
+        init();
+    </script>
+</body>
+</html>

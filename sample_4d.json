@@ -1,0 +1,237 @@
+{
+  "project": {
+    "name": "K0+000-K5+000 高速公路施工",
+    "schema": "IFC4",
+    "description": null
+  },
+  "tasks": [
+    {
+      "id": 2,
+      "name": "施工准备",
+      "start": "2026-03-01",
+      "duration_days": 15,
+      "end": "2026-03-16",
+      "progress": 0,
+      "status": "pending"
+    },
+    {
+      "id": 3,
+      "name": "路基填筑",
+      "start": "2026-03-16",
+      "duration_days": 30,
+      "end": "2026-04-15",
+      "progress": 0,
+      "status": "pending"
+    },
+    {
+      "id": 4,
+      "name": "基层摊铺",
+      "start": "2026-04-28",
+      "duration_days": 30,
+      "end": "2026-05-28",
+      "progress": 0,
+      "status": "pending"
+    },
+    {
+      "id": 5,
+      "name": "面层施工",
+      "start": "2026-04-28",
+      "duration_days": 25,
+      "end": "2026-05-23",
+      "progress": 0,
+      "status": "pending"
+    },
+    {
+      "id": 6,
+      "name": "附属工程",
+      "start": "2026-05-28",
+      "duration_days": 20,
+      "end": "2026-06-17",
+      "progress": 0,
+      "status": "pending"
+    },
+    {
+      "id": 2,
+      "name": "施工准备",
+      "start": "2026-03-01",
+      "duration_days": 15,
+      "end": "2026-03-16",
+      "progress": 0,
+      "status": "pending"
+    },
+    {
+      "id": 3,
+      "name": "路基填筑",
+      "start": "2026-03-16",
+      "duration_days": 30,
+      "end": "2026-04-15",
+      "progress": 0,
+      "status": "pending"
+    },
+    {
+      "id": 4,
+      "name": "基层摊铺",
+      "start": "2026-04-28",
+      "duration_days": 30,
+      "end": "2026-05-28",
+      "progress": 0,
+      "status": "pending"
+    },
+    {
+      "id": 5,
+      "name": "面层施工",
+      "start": "2026-04-28",
+      "duration_days": 25,
+      "end": "2026-05-23",
+      "progress": 0,
+      "status": "pending"
+    },
+    {
+      "id": 6,
+      "name": "附属工程",
+      "start": "2026-05-28",
+      "duration_days": 20,
+      "end": "2026-06-17",
+      "progress": 0,
+      "status": "pending"
+    }
+  ],
+  "milestones": [],
+  "gantt": [
+    {
+      "id": 2,
+      "name": "施工准备",
+      "start": "2026-03-01",
+      "end": "2026-03-16",
+      "duration": 15,
+      "level": 0,
+      "children": []
+    },
+    {
+      "id": 3,
+      "name": "路基填筑",
+      "start": "2026-03-16",
+      "end": "2026-04-15",
+      "duration": 30,
+      "level": 0,
+      "children": []
+    },
+    {
+      "id": 4,
+      "name": "基层摊铺",
+      "start": "2026-04-28",
+      "end": "2026-05-28",
+      "duration": 30,
+      "level": 0,
+      "children": []
+    },
+    {
+      "id": 5,
+      "name": "面层施工",
+      "start": "2026-04-28",
+      "end": "2026-05-23",
+      "duration": 25,
+      "level": 0,
+      "children": []
+    },
+    {
+      "id": 6,
+      "name": "附属工程",
+      "start": "2026-05-28",
+      "end": "2026-06-17",
+      "duration": 20,
+      "level": 0,
+      "children": []
+    },
+    {
+      "id": 2,
+      "name": "施工准备",
+      "start": "2026-03-01",
+      "end": "2026-03-16",
+      "duration": 15,
+      "level": 0,
+      "children": []
+    },
+    {
+      "id": 3,
+      "name": "路基填筑",
+      "start": "2026-03-16",
+      "end": "2026-04-15",
+      "duration": 30,
+      "level": 0,
+      "children": []
+    },
+    {
+      "id": 4,
+      "name": "基层摊铺",
+      "start": "2026-04-28",
+      "end": "2026-05-28",
+      "duration": 30,
+      "level": 0,
+      "children": []
+    },
+    {
+      "id": 5,
+      "name": "面层施工",
+      "start": "2026-04-28",
+      "end": "2026-05-23",
+      "duration": 25,
+      "level": 0,
+      "children": []
+    },
+    {
+      "id": 6,
+      "name": "附属工程",
+      "start": "2026-05-28",
+      "end": "2026-06-17",
+      "duration": 20,
+      "level": 0,
+      "children": []
+    },
+    {
+      "id": 2,
+      "name": "施工准备",
+      "start": "2026-03-01",
+      "end": "2026-03-16",
+      "duration": 15,
+      "level": 0,
+      "children": []
+    },
+    {
+      "id": 3,
+      "name": "路基填筑",
+      "start": "2026-03-16",
+      "end": "2026-04-15",
+      "duration": 30,
+      "level": 0,
+      "children": []
+    },
+    {
+      "id": 4,
+      "name": "基层摊铺",
+      "start": "2026-04-28",
+      "end": "2026-05-28",
+      "duration": 30,
+      "level": 0,
+      "children": []
+    },
+    {
+      "id": 5,
+      "name": "面层施工",
+      "start": "2026-04-28",
+      "end": "2026-05-23",
+      "duration": 25,
+      "level": 0,
+      "children": []
+    },
+    {
+      "id": 6,
+      "name": "附属工程",
+      "start": "2026-05-28",
+      "end": "2026-06-17",
+      "duration": 20,
+      "level": 0,
+      "children": []
+    }
+  ]
+}

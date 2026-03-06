@@ -1,0 +1,113 @@
+{
+  "project": {
+    "name": "高速公路施工项目 (实时)"
+  },
+  "tasks": [
+    {
+      "id": "K0+000-K1+000",
+      "name": "K0+000-K1+000",
+      "start": "2026-03-01",
+      "end": "2026-03-15",
+      "status": "completed",
+      "progress": 100,
+      "events": [
+        {
+          "type": "start",
+          "at": "2026-03-01T00:00:00",
+          "data": {
+            "task": "路基填筑",
+            "duration_days": 30
+          }
+        },
+        {
+          "type": "complete",
+          "at": "2026-03-15T00:00:00",
+          "data": {
+            "progress": 100
+          }
+        }
+      ],
+      "duration_days": 14
+    },
+    {
+      "id": "K1+000-K2+000",
+      "name": "K1+000-K2+000",
+      "start": "2026-03-10",
+      "end": "2026-03-25",
+      "status": "completed",
+      "progress": 100,
+      "events": [
+        {
+          "type": "start",
+          "at": "2026-03-10T00:00:00",
+          "data": {
+            "task": "路基填筑",
+            "duration_days": 30
+          }
+        },
+        {
+          "type": "complete",
+          "at": "2026-03-25T00:00:00",
+          "data": {
+            "progress": 100
+          }
+        }
+      ],
+      "duration_days": 15
+    },
+    {
+      "id": "K2+000-K3+000",
+      "name": "K2+000-K3+000",
+      "start": "2026-03-20",
+      "end": "2026-04-10",
+      "status": "completed",
+      "progress": 100,
+      "events": [
+        {
+          "type": "start",
+          "at": "2026-03-20T00:00:00",
+          "data": {
+            "task": "基层摊铺",
+            "duration_days": 20
+          }
+        },
+        {
+          "type": "complete",
+          "at": "2026-04-10T00:00:00",
+          "data": {
+            "progress": 100
+          }
+        }
+      ],
+      "duration_days": 21
+    },
+    {
+      "id": "K3+000-K4+000",
+      "name": "K3+000-K4+000",
+      "start": "2026-04-01",
+      "end": null,
+      "status": "delayed",
+      "progress": 0,
+      "events": [
+        {
+          "type": "start",
+          "at": "2026-04-01T00:00:00",
+          "data": {
+            "task": "面层施工",
+            "duration_days": 15
+          }
+        },
+        {
+          "type": "delay",
+          "at": "2026-04-05T00:00:00",
+          "data": {
+            "days": 3,
+            "reason": "雨天"
+          }
+        }
+      ]
+    }
+  ],
+  "event_count": 8,
+  "generated_at": "2026-03-06T15:59:53.376937"
+}
