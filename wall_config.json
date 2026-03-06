@@ -1,0 +1,134 @@
+{
+  "project": {
+    "name": "K0+000 ~ K0+150 挡墙段进度可视化",
+    "description": "公路工程挡墙施工进度3D/伪3D模拟系统。虚线表示未建，实线+颜色表示状态。",
+    "total_length": 150,
+    "unit": "m",
+    "alignment_start": "K0+000",
+    "alignment_end": "K0+150",
+    "default_height": 4.5,
+    "creation_date": "2026-03-06",
+    "last_updated": "2026-03-06",
+    "version": "1.0"
+  },
+
+  "visual_rules": {
+    "未建": {
+      "color": "#A0A0A0",
+      "alpha": 0.4,
+      "line_style": "dashed",
+      "label": "未建"
+    },
+    "施工中": {
+      "color": "#FF9800",
+      "alpha": 1.0,
+      "line_style": "solid",
+      "label": "施工中"
+    },
+    "已建": {
+      "color": "#4CAF50",
+      "alpha": 1.0,
+      "line_style": "solid",
+      "label": "已建"
+    },
+    "延误": {
+      "color": "#F44336",
+      "alpha": 1.0,
+      "line_style": "solid",
+      "label": "延误"
+    }
+  },
+
+  "segments": [
+    {
+      "id": "seg_001",
+      "name": "第1段",
+      "start_pile": "K0+000",
+      "end_pile": "K0+050",
+      "length": 50,
+      "layers": [
+        {
+          "name": "基础层",
+          "thickness": 1.2,
+          "height": 1.2,
+          "status": "已建",
+          "progress": 100
+        },
+        {
+          "name": "墙身层",
+          "thickness": 0.8,
+          "height": 2.5,
+          "status": "施工中",
+          "progress": 65
+        },
+        {
+          "name": "帽石层",
+          "thickness": 0.6,
+          "height": 0.8,
+          "status": "未建",
+          "progress": 0
+        }
+      ]
+    },
+    {
+      "id": "seg_002",
+      "name": "第2段",
+      "start_pile": "K0+050",
+      "end_pile": "K0+100",
+      "length": 50,
+      "layers": [
+        {
+          "name": "基础层",
+          "thickness": 1.2,
+          "height": 1.2,
+          "status": "已建",
+          "progress": 100
+        },
+        {
+          "name": "墙身层",
+          "thickness": 0.8,
+          "height": 2.5,
+          "status": "已建",
+          "progress": 100
+        },
+        {
+          "name": "帽石层",
+          "thickness": 0.6,
+          "height": 0.8,
+          "status": "施工中",
+          "progress": 30
+        }
+      ]
+    },
+    {
+      "id": "seg_003",
+      "name": "第3段",
+      "start_pile": "K0+100",
+      "end_pile": "K0+150",
+      "length": 50,
+      "layers": [
+        {
+          "name": "基础层",
+          "thickness": 1.2,
+          "height": 1.2,
+          "status": "施工中",
+          "progress": 80
+        },
+        {
+          "name": "墙身层",
+          "thickness": 0.8,
+          "height": 2.5,
+          "status": "未建",
+          "progress": 0
+        },
+        {
+          "name": "帽石层",
+          "thickness": 0.6,
+          "height": 0.8,
+          "status": "未建",
+          "progress": 0
+        }
+      ]
+    }
+  ]
+}

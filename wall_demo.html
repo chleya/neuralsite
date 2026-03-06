@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>挡墙施工进度可视化</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        #header {
+            padding: 20px;
+            text-align: center;
+            background: rgba(0,0,0,0.3);
+        }
+        #title { font-size: 24px; color: #00d4ff; }
+        #subtitle { color: #888; font-size: 14px; margin-top: 5px; }
+        
+        #controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.6);
+            padding: 15px;
+            border-radius: 10px;
+            z-index: 100;
+        }
+        
+        #timeline-slider {
+            width: 300px;
+            margin: 10px 0;
+        }
+        
+        .slider-label { font-size: 12px; color: #888; }
+        
+        #view { padding: 20px; }
+        
+        #canvas-container {
+            background: linear-gradient(180deg, #87CEEB 0%, #E0F7FA 100%);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        #info {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            color: #333;
+            font-size: 12px;
+        }
+        
+        .legend {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            justify-content: center;
+        }
+        .legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; }
+        .legend-color { width: 20px; height: 12px; border-radius: 2px; }
+        
+        #status-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 10px;
+            max-width: 300px;
+        }
+        
+        .segment-card {
+            background: rgba(255,255,255,0.1);
+            margin: 8px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        
+        .segment-name { font-weight: bold; color: #00d4ff; }
+        
+        .layer-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 0;
+            font-size: 12px;
+        }
+        
+        .layer-status {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <div id="title">🧱 挡墙施工进度可视化</div>
+        <div id="subtitle">K0+000 ~ K0+150 路段</div>
+    </div>
+    
+    <div id="controls">
+        <div class="slider-label">📅 进度时间线</div>
+        <input type="range" id="timeline-slider" min="0" max="100" value="100">
+        <div id="timeline-value">100%</div>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background:#4CAF50"></div>
+                <span>已建</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background:#FF9800"></div>
+                <span>施工中</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background:#A0A0A0; border:1px dashed #666"></div>
+                <span>未建</span>
+            </div>
+        </div>
+    </div>
+    
+    <div id="view">
+        <div id="canvas-container">
+            <canvas id="canvas" width="1000" height="500"></canvas>
+            <div id="info">📐 正视图 | 比例: 1cm = 2px | 高度已放大</div>
+        </div>
+    </div>
+    
+    <div id="status-panel">
+        <h4>📊 状态详情</h4>
+        <div id="segments-list"></div>
+    </div>
+
+    <script>
+        // 加载配置
+        const config = {
+            "project": {
+                "name": "K0+000 ~ K0+150 挡墙段进度可视化",
+                "total_length": 150,
+                "default_height": 4.5
+            },
+            "visual_rules": {
+                "未建": {"color": "#A0A0A0", "alpha": 0.3, "line_style": "dashed"},
+                "施工中": {"color": "#FF9800", "alpha": 1.0, "line_style": "solid"},
+                "已建": {"color": "#4CAF50", "alpha": 1.0, "line_style": "solid"}
+            },
+            "segments": [
+                {
+                    "id": "seg_001",
+                    "name": "第1段 (K0+000-K0+050)",
+                    "length": 50,
+                    "layers": [
+                        {"name": "基础层", "height": 1.2, "status": "已建", "progress": 100},
+                        {"name": "墙身层", "height": 2.5, "status": "施工中", "progress": 65},
+                        {"name": "帽石层", "height": 0.8, "status": "未建", "progress": 0}
+                    ]
+                },
+                {
+                    "id": "seg_002", 
+                    "name": "第2段 (K0+050-K0+100)",
+                    "length": 50,
+                    "layers": [
+                        {"name": "基础层", "height": 1.2, "status": "已建", "progress": 100},
+                        {"name": "墙身层", "height": 2.5, "status": "已建", "progress": 100},
+                        {"name": "帽石层", "height": 0.8, "status": "施工中", "progress": 30}
+                    ]
+                },
+                {
+                    "id": "seg_003",
+                    "name": "第3段 (K0+100-K0+150)",
+                    "length": 50,
+                    "layers": [
+                        {"name": "基础层", "height": 1.2, "status": "施工中", "progress": 80},
+                        {"name": "墙身层", "height": 2.5, "status": "未建", "progress": 0},
+                        {"name": "帽石层", "height": 0.8, "status": "未建", "progress": 0}
+                    ]
+                }
+            ]
+        };
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 绘制参数
+        const params = {
+            segmentWidth: 200,
+            baseY: 400,
+            heightScale: 40,
+            startX: 100,
+            gap: 20
+        };
+
+        function getLayerColor(status) {
+            const rules = config.visual_rules[status];
+            return rules ? rules.color : '#888';
+        }
+
+        function getLayerAlpha(status) {
+            const rules = config.visual_rules[status];
+            return rules ? rules.alpha : 0.5;
+        }
+
+        function isDashed(status) {
+            const rules = config.visual_rules[status];
+            return rules && rules.line_style === 'dashed';
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制地面线
+            ctx.strokeStyle = '#666';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(50, params.baseY);
+            ctx.lineTo(900, params.baseY);
+            ctx.stroke();
+            
+            // 绘制桩号标注
+            ctx.fillStyle = '#666';
+            ctx.font = '12px Microsoft YaHei';
+            ctx.fillText('K0+000', 80, params.baseY + 20);
+            ctx.fillText('K0+050', 280, params.baseY + 20);
+            ctx.fillText('K0+100', 480, params.baseY + 20);
+            ctx.fillText('K0+150', 680, params.baseY + 20);
+            
+            // 绘制每个段
+            config.segments.forEach((seg, segIndex) => {
+                let currentY = params.baseY;
+                const segX = params.startX + segIndex * (params.segmentWidth + params.gap);
+                
+                // 绘制段名
+                ctx.fillStyle = '#333';
+                ctx.font = 'bold 14px Microsoft YaHei';
+                ctx.fillText(seg.name, segX + 40, params.baseY + 45);
+                
+                // 绘制每层（从下往上）
+                [...seg.layers].reverse().forEach(layer => {
+                    const layerHeight = layer.height * params.heightScale;
+                    const layerWidth = params.segmentWidth - 40;
+                    const layerX = segX + 20;
+                    
+                    const color = getLayerColor(layer.status);
+                    const alpha = getLayerAlpha(layer.status);
+                    
+                    // 绘制层
+                    ctx.globalAlpha = alpha;
+                    ctx.fillStyle = color;
+                    ctx.fillRect(layerX, currentY - layerHeight, layerWidth, layerHeight);
+                    
+                    // 边框
+                    ctx.globalAlpha = 1;
+                    ctx.strokeStyle = '#333';
+                    ctx.lineWidth = 2;
+                    
+                    if (isDashed(layer.status)) {
+                        ctx.setLineDash([8, 4]);
+                    } else {
+                        ctx.setLineDash([]);
+                    }
+                    ctx.strokeRect(layerX, currentY - layerHeight, layerWidth, layerHeight);
+                    ctx.setLineDash([]);
+                    
+                    // 层名
+                    if (layerHeight > 20) {
+                        ctx.fillStyle = layer.status === '未建' ? '#666' : '#fff';
+                        ctx.font = 'bold 12px Microsoft YaHei';
+                        ctx.fillText(layer.name, layerX + 5, currentY - layerHeight + 18);
+                        
+                        // 进度百分比
+                        ctx.font = '11px Microsoft YaHei';
+                        ctx.fillText(layer.progress + '%', layerX + layerWidth - 35, currentY - layerHeight + 18);
+                    }
+                    
+                    // 状态标签
+                    const statusColors = {
+                        '已建': '#4CAF50',
+                        '施工中': '#FF9800',
+                        '未建': '#999'
+                    };
+                    ctx.fillStyle = statusColors[layer.status] || '#666';
+                    ctx.font = '10px Microsoft YaHei';
+                    ctx.fillText(layer.status, layerX + layerWidth / 2 - 15, currentY - layerHeight / 2);
+                    
+                    currentY -= layerHeight;
+                });
+            });
+        }
+
+        function updateStatusPanel() {
+            const list = document.getElementById('segments-list');
+            let html = '';
+            
+            config.segments.forEach(seg => {
+                html += `<div class="segment-card">
+                    <div class="segment-name">${seg.name}</div>`;
+                
+                seg.layers.forEach(layer => {
+                    const statusColors = {
+                        '已建': 'background:#4CAF50',
+                        '施工中': 'background:#FF9800',
+                        '未建': 'background:#888'
+                    };
+                    html += `<div class="layer-item">
+                        <span>${layer.name}</span>
+                        <span class="layer-status" style="${statusColors[layer.status]}">${layer.status} ${layer.progress}%</span>
+                    </div>`;
+                });
+                
+                html += '</div>';
+            });
+            
+            list.innerHTML = html;
+        }
+
+        // 滑块控制
+        const slider = document.getElementById('timeline-slider');
+        const valueDisplay = document.getElementById('timeline-value');
+        
+        slider.addEventListener('input', (e) => {
+            valueDisplay.textContent = e.target.value + '%';
+            // 这里可以添加根据时间进度更新状态的逻辑
+            draw();
+        });
+
+        // 初始化
+        draw();
+        updateStatusPanel();
+    </script>
+</body>
+</html>
