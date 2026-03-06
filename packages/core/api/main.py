@@ -27,6 +27,13 @@ from api.v1.routes.spatial_api import router as spatial_api_router
 from api.v1.routes.qa_api import router as qa_router
 from core.ai_detection.api import router as ai_detection_router
 
+# 4D施工模拟路由
+try:
+    from packages.4d_service.router import router as four_d_router
+    FOUR_D_AVAILABLE = True
+except ImportError:
+    FOUR_D_AVAILABLE = False
+
 # P0路由 (照片管理+问题跟踪+离线同步)
 try:
     from api.v1.p0_routes import router as p0_router
@@ -95,6 +102,11 @@ app.include_router(ai_detection_router)
 if P0_ROUTES_AVAILABLE:
     app.include_router(p0_router)
     print("P0 routes registered")
+
+# 注册4D施工模拟路由
+if FOUR_D_AVAILABLE:
+    app.include_router(four_d_router)
+    print("4D routes registered")
 
 # 注册Project & Route路由
 if PROJECT_ROUTES_AVAILABLE:
