@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>时空状态管理系统 - NeuralSite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Noto Sans SC', sans-serif; background: #0f172a; color: #e2e8f0; }
+        .slider-thumb { -webkit-appearance: none; appearance: none; }
+        .slider-thumb::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: #06b6d4; border-radius: 50%; cursor: pointer; }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Header -->
+    <div class="bg-slate-800 border-b border-slate-700 p-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <h1 class="text-xl font-bold text-cyan-400">🛣️ 时空状态管理系统</h1>
+                <span class="text-slate-400">|</span>
+                <span class="text-slate-300">京沪高速拓宽工程</span>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="showTab('query')" class="px-4 py-2 bg-cyan-600 rounded-lg">实时查询</button>
+                <button onclick="showTab('simulate')" class="px-4 py-2 bg-slate-700 rounded-lg">状态模拟</button>
+                <button onclick="showTab('events')" class="px-4 py-2 bg-slate-700 rounded-lg">事件管理</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto p-6">
+        <!-- Tab: Query -->
+        <div id="tab-query">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Search -->
+                <div class="lg:col-span-3 bg-slate-800 rounded-xl p-4">
+                    <div class="flex gap-4">
+                        <input type="text" id="station-input" placeholder="输入桩号(如 K5+200)" 
+                               class="flex-1 px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg focus:border-cyan-500">
+                        <button onclick="doQuery()" class="px-6 py-3 bg-cyan-600 hover:bg-cyan-700 rounded-lg">查询</button>
+                    </div>
+                </div>
+
+                <!-- Result -->
+                <div class="lg:col-span-2 bg-slate-800 rounded-xl p-6">
+                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                        <span class="text-cyan-400">📍</span> 实时状态
+                    </h2>
+                    <div id="query-result">
+                        <div class="text-slate-400 text-center py-8">输入桩号查询实时状态</div>
+                    </div>
+                </div>
+
+                <!-- Info Panel -->
+                <div class="bg-slate-800 rounded-xl p-6">
+                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                        <span class="text-purple-400">📊</span> 数据统计
+                    </h2>
+                    <div class="space-y-4">
+                        <div class="bg-slate-700 rounded-lg p-4">
+                            <div class="text-3xl font-bold text-cyan-400">90</div>
+                            <div class="text-sm text-slate-400">工程实体</div>
+                        </div>
+                        <div class="bg-slate-700 rounded-lg p-4">
+                            <div class="text-3xl font-bold text-purple-400">245</div>
+                            <div class="text-sm text-slate-400">状态快照</div>
+                        </div>
+                        <div class="bg-slate-700 rounded-lg p-4">
+                            <div class="text-3xl font-bold text-green-400">18</div>
+                            <div class="text-sm text-slate-400">待处理事件</div>
+                        </div>
+                        <div class="bg-slate-700 rounded-lg p-4">
+                            <div class="text-3xl font-bold text-amber-400">156</div>
+                            <div class="text-sm text-slate-400">上链哈希</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Simulate -->
+        <div id="tab-simulate" class="hidden">
+            <div class="bg-slate-800 rounded-xl p-6">
+                <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                    <span class="text-cyan-400">🎬</span> 状态模拟 - 时间轴
+                </h2>
+                
+                <div class="mb-6">
+                    <label class="block text-sm text-slate-400 mb-2">选择实体</label>
+                    <select id="sim-entity" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg">
+                        <option value="pav-5000">PAV-K5000-K5500 (路面)</option>
+                        <option value="sub-5000">SUB-K5000-K5500 (路基)</option>
+                        <option value="bridge-5100">BRG-K5100 (桥梁)</option>
+                    </select>
+                </div>
+
+                <!-- Timeline -->
+                <div class="mb-6">
+                    <div class="flex justify-between text-sm text-slate-400 mb-2">
+                        <span>初始状态</span>
+                        <span id="current-frame-label">当前: 85%</span>
+                        <span>设计完成</span>
+                    </div>
+                    <input type="range" id="timeline" min="0" max="30" value="25" 
+                           class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider-thumb"
+                           oninput="updateSimulation(this.value)">
+                    <div class="flex justify-between text-xs text-slate-500 mt-1">
+                        <span>Day 0</span>
+                        <span>Day 15</span>
+                        <span>Day 30</span>
+                    </div>
+                </div>
+
+                <!-- Animation Frame -->
+                <div class="bg-slate-900 rounded-lg p-6" id="sim-frame">
+                    <div class="text-center">
+                        <div class="text-6xl font-bold text-cyan-400 mb-2" id="sim-progress">92%</div>
+                        <div class="text-slate-400">施工进度</div>
+                    </div>
+                    
+                    <div class="mt-6 grid grid-cols-3 gap-4">
+                        <div class="bg-slate-800 rounded-lg p-4 text-center">
+                            <div class="text-xl font-bold text-green-400" id="sim-coverage">91%</div>
+                            <div class="text-xs text-slate-400">覆盖度</div>
+                        </div>
+                        <div class="bg-slate-800 rounded-lg p-4 text-center">
+                            <div class="text-xl font-bold text-purple-400" id="sim-layers">2/2</div>
+                            <div class="text-xs text-slate-400">层级</div>
+                        </div>
+                        <div class="bg-slate-800 rounded-lg p-4 text-center">
+                            <div class="text-xl font-bold text-amber-400" id="sim-hash">b75f...</div>
+                            <div class="text-xs text-slate-400">哈希</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 flex gap-4">
+                    <button onclick="playAnimation()" class="px-4 py-2 bg-green-600 rounded-lg">▶ 播放动画</button>
+                    <button onclick="stopAnimation()" class="px-4 py-2 bg-red-600 rounded-lg">⏹ 停止</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Events -->
+        <div id="tab-events" class="hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Add Event -->
+                <div class="bg-slate-800 rounded-xl p-6">
+                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                        <span class="text-red-400">⚡</span> 添加事件
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm text-slate-400 mb-1">事件类型</label>
+                            <select id="event-type" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg">
+                                <option value="weather">🌧️ 天气影响</option>
+                                <option value="blockage">🚫 阻工</option>
+                                <option value="disaster">🌋 地质灾害</option>
+                                <option value="change_order">📝 设计变更</option>
+                            </select>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm text-slate-400 mb-1">起始桩号</label>
+                                <input type="text" id="event-station-start" placeholder="K5+000" 
+                                       class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-slate-400 mb-1">结束桩号</label>
+                                <input type="text" id="event-station-end" placeholder="K5+500" 
+                                       class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm text-slate-400 mb-1">事件数据</label>
+                            <textarea id="event-data" rows="3" placeholder='{"rainfall_mm": 120, "delay_days": 3}'
+                                      class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg font-mono text-sm"></textarea>
+                        </div>
+                        
+                        <button onclick="addEvent()" class="w-full py-3 bg-red-600 hover:bg-red-700 rounded-lg">添加事件</button>
+                    </div>
+                </div>
+
+                <!-- Event List -->
+                <div class="bg-slate-800 rounded-xl p-6">
+                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                        <span class="text-amber-400">📋</span> 事件列表
+                    </h2>
+                    
+                    <div class="space-y-3" id="event-list">
+                        <div class="bg-slate-700 rounded-lg p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="px-2 py-1 bg-blue-600 rounded text-xs">天气</span>
+                                    <span class="ml-2 font-bold">暴雨影响</span>
+                                </div>
+                                <span class="text-xs text-slate-400">2026-03-01</span>
+                            </div>
+                            <div class="text-sm text-slate-400 mt-2">K5+000 - K5+500 | 降雨量: 120mm</div>
+                            <div class="flex justify-between mt-2">
+                                <span class="text-xs text-yellow-400">待处理</span>
+                                <button class="text-xs text-cyan-400">查看详情</button>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-slate-700 rounded-lg p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="px-2 py-1 bg-red-600 rounded text-xs">阻工</span>
+                                    <span class="ml-2 font-bold">村民阻工</span>
+                                </div>
+                                <span class="text-xs text-slate-400">2026-02-28</span>
+                            </div>
+                            <div class="text-sm text-slate-400 mt-2">K5+200 - K5+300 | 延误3天</div>
+                            <div class="flex justify-between mt-2">
+                                <span class="text-xs text-green-400">已解决</span>
+                                <button class="text-xs text-cyan-400">查看详情</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mock data
+        const mockData = {
+            'entities': {
+                'pav-5000': {
+                    code: 'PAV-K5000-K5500',
+                    type: '路面',
+                    current: { progress: 85, coverage: 0.85, layers: 2, hash: 'b75fd6a1' },
+                    designed: { progress: 100, coverage: 1.0, layers: 2 }
+                }
+            }
+        };
+
+        // Tab switching
+        function showTab(tab) {
+            document.getElementById('tab-query').classList.add('hidden');
+            document.getElementById('tab-simulate').classList.add('hidden');
+            document.getElementById('tab-events').classList.add('hidden');
+            document.getElementById('tab-' + tab).classList.remove('hidden');
+        }
+
+        // Query
+        function doQuery() {
+            const station = document.getElementById('station-input').value;
+            if (!station) return;
+
+            const result = document.getElementById('query-result');
+            result.innerHTML = `
+                <div class="bg-slate-700 rounded-lg p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <div class="text-2xl font-bold text-cyan-400">${station}</div>
+                            <div class="text-slate-400">PAV-K5000-K5500</div>
+                        </div>
+                        <span class="px-3 py-1 bg-green-600 rounded">正常</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="bg-slate-800 rounded p-3">
+                            <div class="text-sm text-slate-400">当前进度</div>
+                            <div class="text-xl font-bold text-cyan-400">85%</div>
+                        </div>
+                        <div class="bg-slate-800 rounded p-3">
+                            <div class="text-sm text-slate-400">状态类型</div>
+                            <div class="text-xl font-bold text-purple-400">实际(Actual)</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="text-sm text-slate-400 mb-1">设计厚度</div>
+                        <div class="text-lg">36cm (C30混凝土)</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="text-sm text-slate-400 mb-1">区块链哈希</div>
+                        <div class="font-mono text-xs text-amber-400 bg-slate-800 p-2 rounded">b75fd6a19253c6fd8a3b2c1d0e5f7a9b</div>
+                    </div>
+                    
+                    <div>
+                        <div class="text-sm text-slate-400 mb-1">最近照片</div>
+                        <div class="flex gap-2">
+                            <div class="w-16 h-16 bg-slate-600 rounded flex items-center justify-center">📷</div>
+                            <div class="w-16 h-16 bg-slate-600 rounded flex items-center justify-center">📷</div>
+                            <div class="w-16 h-16 bg-slate-600 rounded flex items-center justify-center">📷</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Simulation
+        let animationInterval = null;
+        
+        function updateSimulation(value) {
+            const progress = 85 + (100 - 85) * (value / 30);
+            const coverage = 0.85 + (1.0 - 0.85) * (value / 30);
+            
+            document.getElementById('sim-progress').textContent = Math.round(progress) + '%';
+            document.getElementById('sim-coverage').textContent = Math.round(coverage * 100) + '%';
+            document.getElementById('current-frame-label').textContent = '当前: ' + Math.round(progress) + '%';
+        }
+
+        function playAnimation() {
+            let frame = 0;
+            animationInterval = setInterval(() => {
+                frame = (frame + 1) % 31;
+                document.getElementById('timeline').value = frame;
+                updateSimulation(frame);
+            }, 100);
+        }
+
+        function stopAnimation() {
+            if (animationInterval) {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        // Events
+        function addEvent() {
+            const type = document.getElementById('event-type').value;
+            const stationStart = document.getElementById('event-station-start').value;
+            const stationEnd = document.getElementById('event-station-end').value;
+            const data = document.getElementById('event-data').value;
+
+            if (!stationStart || !stationEnd) {
+                alert('请输入桩号范围');
+                return;
+            }
+
+            alert('事件已添加: ' + type + ' @ ' + stationStart + ' - ' + stationEnd);
+        }
+
+        // Enter key for query
+        document.getElementById('station-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') doQuery();
+        });
+    </script>
+</body>
+</html>

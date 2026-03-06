@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>时空状态管理 - NeuralSite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Noto Sans SC', sans-serif; background: #0f172a; color: #e2e8f0; }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Header -->
+    <div class="bg-slate-800 border-b border-slate-700 p-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <h1 class="text-xl font-bold text-cyan-400">🛣️ 时空状态管理</h1>
+                <span class="text-slate-400">|</span>
+                <span class="text-slate-300">京沪高速拓宽工程</span>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="showTab('query')" class="px-4 py-2 bg-cyan-600 rounded-lg">查询</button>
+                <button onclick="showTab('entity')" class="px-4 py-2 bg-slate-700 rounded-lg">实体管理</button>
+                <button onclick="showTab('simulate')" class="px-4 py-2 bg-slate-700 rounded-lg">模拟</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto p-6">
+        <!-- Tab: Query -->
+        <div id="tab-query">
+            <div class="bg-slate-800 rounded-xl p-6">
+                <h2 class="text-lg font-bold mb-4">🔍 桩号查询</h2>
+                <div class="flex gap-4 mb-6">
+                    <input type="text" id="station-input" placeholder="输入桩号(如 K5+200 或 5200)" 
+                           class="flex-1 px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg">
+                    <button onclick="doQuery()" class="px-6 py-3 bg-cyan-600 rounded-lg">查询</button>
+                </div>
+                
+                <div id="query-result" class="hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-slate-700 rounded-lg p-4">
+                            <div class="text-sm text-slate-400">桩号</div>
+                            <div class="text-2xl font-bold text-cyan-400" id="res-station">K5+200</div>
+                        </div>
+                        <div class="bg-slate-700 rounded-lg p-4">
+                            <div class="text-sm text-slate-400">实体</div>
+                            <div class="text-2xl font-bold text-purple-400" id="res-entity">PAV-K5000-K5500</div>
+                        </div>
+                        <div class="bg-slate-700 rounded-lg p-4">
+                            <div class="text-sm text-slate-400">当前进度</div>
+                            <div class="text-2xl font-bold text-green-400" id="res-progress">85%</div>
+                        </div>
+                        <div class="bg-slate-700 rounded-lg p-4">
+                            <div class="text-sm text-slate-400">状态类型</div>
+                            <div class="text-xl font-bold text-amber-400" id="res-status">实际(Actual)</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 bg-slate-700 rounded-lg p-4">
+                        <div class="text-sm text-slate-400 mb-2">区块链哈希</div>
+                        <div class="font-mono text-xs text-amber-400 bg-slate-800 p-2 rounded" id="res-hash">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Entity -->
+        <div id="tab-entity" class="hidden">
+            <div class="bg-slate-800 rounded-xl p-6">
+                <h2 class="text-lg font-bold mb-4">📦 实体管理</h2>
+                
+                <div class="mb-4">
+                    <button onclick="showAddEntity()" class="px-4 py-2 bg-green-600 rounded-lg">+ 添加实体</button>
+                </div>
+                
+                <!-- Entity List -->
+                <div class="space-y-3" id="entity-list">
+                    <div class="bg-slate-700 rounded-lg p-4 flex justify-between items-center">
+                        <div>
+                            <div class="font-bold text-cyan-400">PAV-K5000-K5500</div>
+                            <div class="text-sm text-slate-400">路面工程 | 5000-5500</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-green-400">85%</div>
+                            <button onclick="editEntity('pav-5000')" class="text-xs text-cyan-400">编辑</button>
+                        </div>
+                    </div>
+                    <div class="bg-slate-700 rounded-lg p-4 flex justify-between items-center">
+                        <div>
+                            <div class="font-bold text-purple-400">SUB-K5000-K5500</div>
+                            <div class="text-sm text-slate-400">路基工程 | 5000-5500</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-green-400">92%</div>
+                            <button onclick="editEntity('sub-5000')" class="text-xs text-cyan-400">编辑</button>
+                        </div>
+                    </div>
+                    <div class="bg-slate-700 rounded-lg p-4 flex justify-between items-center">
+                        <div>
+                            <div class="font-bold text-amber-400">BRG-K5100-K5200</div>
+                            <div class="text-sm text-slate-400">桥梁工程 | 5100-5200</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-yellow-400">60%</div>
+                            <button onclick="editEntity('bridge-5100')" class="text-xs text-cyan-400">编辑</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Simulate -->
+        <div id="tab-simulate" class="hidden">
+            <div class="bg-slate-800 rounded-xl p-6">
+                <h2 class="text-lg font-bold mb-4">🎬 状态模拟</h2>
+                
+                <div class="mb-4">
+                    <label class="block text-sm text-slate-400 mb-2">选择实体</label>
+                    <select id="sim-entity" class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg">
+                        <option value="pav-5000">PAV-K5000-K5500 (路面)</option>
+                        <option value="sub-5000">SUB-K5000-K5500 (路基)</option>
+                        <option value="bridge-5100">BRG-K5100-K5200 (桥梁)</option>
+                    </select>
+                </div>
+
+                <div class="mb-6">
+                    <div class="flex justify-between text-sm text-slate-400 mb-2">
+                        <span>起始</span>
+                        <span id="sim-label">当前: 85%</span>
+                        <span>目标: 100%</span>
+                    </div>
+                    <input type="range" id="sim-slider" min="0" max="100" value="85" 
+                           class="w-full h-2 bg-slate-700 rounded-lg"
+                           oninput="updateSim(this.value)">
+                </div>
+
+                <div class="bg-slate-900 rounded-lg p-6 text-center">
+                    <div class="text-6xl font-bold text-cyan-400 mb-2" id="sim-progress">85%</div>
+                    <div class="text-slate-400">模拟进度</div>
+                    
+                    <div class="mt-4 grid grid-cols-3 gap-4">
+                        <div class="bg-slate-800 rounded p-3">
+                            <div class="text-sm text-slate-400">覆盖度</div>
+                            <div class="font-bold" id="sim-coverage">85%</div>
+                        </div>
+                        <div class="bg-slate-800 rounded p-3">
+                            <div class="text-sm text-slate-400">层级</div>
+                            <div class="font-bold">2/2</div>
+                        </div>
+                        <div class="bg-slate-800 rounded p-3">
+                            <div class="text-sm text-slate-400">状态</div>
+                            <div class="font-bold text-green-400">正常</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 flex gap-4">
+                    <button onclick="applySim()" class="px-4 py-2 bg-green-600 rounded-lg">✓ 应用到实际</button>
+                    <button onclick="resetSim()" class="px-4 py-2 bg-slate-600 rounded-lg">重置</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        function showTab(tab) {
+            ['query', 'entity', 'simulate'].forEach(t => {
+                document.getElementById('tab-' + t).classList.add('hidden');
+            });
+            document.getElementById('tab-' + tab).classList.remove('hidden');
+        }
+
+        // Query
+        function doQuery() {
+            const station = document.getElementById('station-input').value;
+            if (!station) return;
+
+            // Mock result
+            document.getElementById('query-result').classList.remove('hidden');
+            document.getElementById('res-station').textContent = station;
+            document.getElementById('res-progress').textContent = '85%';
+            document.getElementById('res-hash').textContent = 'b75fd6a19253c6fd8a3b2c1d0e5f7a9b';
+        }
+
+        // Simulation
+        function updateSim(value) {
+            document.getElementById('sim-progress').textContent = value + '%';
+            document.getElementById('sim-label').textContent = '当前: ' + value + '%';
+            document.getElementById('sim-coverage').textContent = value + '%';
+        }
+
+        function applySim() {
+            alert('模拟进度已保存');
+        }
+
+        function resetSim() {
+            document.getElementById('sim-slider').value = 85;
+            updateSim(85);
+        }
+
+        function showAddEntity() {
+            alert('添加实体功能');
+        }
+
+        function editEntity(id) {
+            alert('编辑实体: ' + id);
+        }
+
+        // Enter key
+        document.getElementById('station-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') doQuery();
+        });
+    </script>
+</body>
+</html>

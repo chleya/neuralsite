@@ -1,0 +1,242 @@
+# -*- coding: utf-8 -*-
+"""
+仪表盘页面模板
+"""
+
+DASHBOARD_PAGE_TEMPLATE = '''
+<template>
+  <div class="{{ class_name }}">
+    <!-- 统计卡片 -->
+    <el-row :gutter="20" class="stat-row">
+      {%- for stat in stats %}
+      <el-col :span="{{ 24 // stats | length }}">
+        <el-card class="stat-card" shadow="hover">
+          <div class="stat-content">
+            <div class="stat-icon" :style="{ background: '{{ stat.color }}' }">
+              <el-icon :size="30"><{{ stat.icon }} /></el-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-label">{{ stat.label }}</div>
+              <div class="stat-value">{{ stat.value }}</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+      {%- endfor %}
+    </el-row>
+    
+    <!-- 图表区域 -->
+    <el-row :gutter="20" class="chart-row">
+      {%- for chart in charts %}
+      <el-col :span="{{ chart.span | default(12) }}">
+        <el-card>
+          <template #header>
+            <div class="card-header">
+              <span>{{ chart.title }}</span>
+            </div>
+          </template>
+          <div ref="chart{{ loop.index }}Ref" style="width: 100%; height: 300px;"></div>
+        </el-card>
+      </el-col>
+      {%- endfor %}
+    </el-row>
+    
+    <!-- 数据列表 -->
+    <el-row :gutter="20" class="table-row">
+      <el-col :span="24">
+        <el-card>
+          <template #header>
+            <div class="card-header">
+              <span>{{ table_title }}</span>
+              <el-button type="primary" link>查看更多</el-button>
+            </div>
+          </template>
+          <el-table :data="tableData" v-loading="loading">
+            {%- for field in table_fields %}
+            <el-table-column prop="{{ field.name }}" label="{{ field.label }}" />
+            {%- endfor %}
+            <el-table-column label="操作" width="120">
+              <template #default="scope">
+                <el-button link type="primary" @click="handle">详情</el-button>
+              Detail(scope.row)</template>
+            </el-table-column>
+          </el-table>
+        </el-card>
+      </el-col>
+    </el-row>
+  </div>
+</template>
+
+<script setup>
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import * as echarts from 'echarts'
+import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+
+const router = useRouter()
+
+// 图表实例集合
+const chartInstances = {}
+
+// 状态
+const loading = ref(false)
+const tableData = ref([])
+
+// 统计卡片数据
+const stats = {{ stats | tojson }}
+
+// 图表配置
+const charts = {{ charts | tojson }}
+
+// 表格字段
+const tableFields = {{ table_fields | tojson }}
+
+// 表格标题
+const tableTitle = '{{ table_title }}'
+
+// 加载统计数据
+async function loadStats() {
+  try {
+    const res = await api.getDashboardStats()
+    // 更新统计数据
+    stats.forEach((stat, index) => {
+      stat.value = res.data[index]?.value || 0
+    })
+  } catch (error) {
+    console.error('加载统计失败', error)
+  }
+}
+
+// 加载图表数据
+async function loadChartData() {
+  for (const chart of charts) {
+    try {
+      const res = await api[chart.api]()
+      
+      const option = {
+        title: { text: chart.title },
+        tooltip: { trigger: chart.type === 'pie' ? 'item' : 'axis' },
+        {%- if chart.type == 'pie' %}
+        series: [{
+          type: 'pie',
+          radius: '60%',
+          data: res.data
+        }]
+        {%- else %}
+        xAxis: { type: 'category', data: res.data.x },
+        yAxis: { type: 'value' },
+        series: [{
+          type: chart.type,
+          data: res.data.y
+        }]
+        {%- endif %}
+      }
+      
+      const chartRef = `chart${charts.indexOf(chart) + 1}Ref`
+      const chartEl = document.querySelector(`[ref="${chartRef}"]`) || 
+                      document.querySelector(`[data-chart-ref="${chartRef}"]`)
+      
+      if (chartEl && echarts.getInstanceByDom(chartEl)) {
+        echarts.getInstanceByDom(chartEl).setOption(option)
+      }
+    } catch (error) {
+      console.error(`加载图表${chart.title}失败`, error)
+    }
+  }
+}
+
+// 加载表格数据
+async function loadTableData() {
+  loading.value = true
+  try {
+    const res = await api.get{{ table_name | capitalize }}List({ page: 1, size: 5 })
+    tableData.value = res.data.list
+  } catch (error) {
+    ElMessage.error('加载列表失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 查看详情
+function handleDetail(row) {
+  router.push({ path: '/{{ table_name }}/detail', query: { id: row.id } })
+}
+
+// 初始化
+onMounted(async () => {
+  await Promise.all([
+    loadStats(),
+    loadChartData(),
+    loadTableData()
+  ])
+})
+
+onUnmounted(() => {
+  Object.values(chartInstances).forEach(instance => {
+    instance.dispose()
+  })
+})
+</script>
+
+<style scoped>
+.{{ class_name }} {
+  padding: 20px;
+}
+
+.stat-row {
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+}
+
+.stat-content {
+  display: flex;
+  align-items: center;
+}
+
+.stat-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  margin-right: 20px;
+}
+
+.stat-info {
+  flex: 1;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #909399;
+  margin-bottom: 5px;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #303133;
+}
+
+.chart-row {
+  margin-bottom: 20px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+</style>
+'''

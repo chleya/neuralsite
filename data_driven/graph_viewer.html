@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>道路图数据 - 桩号查询系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Noto Sans SC', sans-serif; background: #0f172a; color: #e2e8f0; }
+        .station-point { cursor: pointer; transition: all 0.2s; }
+        .station-point:hover { transform: scale(1.3); }
+        .station-point.active { fill: #f59e0b; transform: scale(1.5); }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- 顶部搜索栏 -->
+    <div class="bg-slate-800 border-b border-slate-700 p-4">
+        <div class="max-w-6xl mx-auto flex gap-4 items-center">
+            <h1 class="text-xl font-bold text-cyan-400">🛣️ 道路图数据查询</h1>
+            <input type="text" id="search-input" placeholder="输入桩号(如 K4+500)" 
+                   class="flex-1 px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg focus:border-cyan-500 focus:outline-none">
+            <button onclick="searchStation()" class="px-6 py-2 bg-cyan-600 hover:bg-cyan-700 rounded-lg">查询</button>
+        </div>
+    </div>
+
+    <div class="max-w-6xl mx-auto p-4 flex gap-6">
+        <!-- 左侧：高程曲线图 -->
+        <div class="flex-1 bg-slate-800 rounded-xl p-4">
+            <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <span class="text-cyan-400">📊</span> 高程纵断面曲线
+            </h2>
+            <div class="relative h-80 bg-slate-900 rounded-lg overflow-hidden" id="chart-container">
+                <svg id="elevation-chart" class="w-full h-full"></svg>
+            </div>
+            <div class="mt-2 text-sm text-slate-400 flex justify-between">
+                <span>K4+300</span>
+                <span>点击查看详情</span>
+                <span>K4+740</span>
+            </div>
+        </div>
+
+        <!-- 右侧：详细信息 -->
+        <div class="w-80 bg-slate-800 rounded-xl p-4">
+            <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <span class="text-amber-400">📋</span> 桩号详情
+            </h2>
+            
+            <div id="station-info" class="space-y-4">
+                <div class="text-center text-slate-400 py-8">
+                    点击左侧图表中的点查看详情
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部：数据统计 -->
+    <div class="max-w-6xl mx-auto p-4">
+        <div class="bg-slate-800 rounded-xl p-4">
+            <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <span class="text-green-400">📈</span> 数据统计
+            </h2>
+            <div class="grid grid-cols-4 gap-4">
+                <div class="bg-slate-700 rounded-lg p-4 text-center">
+                    <div class="text-2xl font-bold text-cyan-400" id="stat-stations">90</div>
+                    <div class="text-sm text-slate-400">桩号数量</div>
+                </div>
+                <div class="bg-slate-700 rounded-lg p-4 text-center">
+                    <div class="text-2xl font-bold text-purple-400" id="stat-segments">89</div>
+                    <div class="text-sm text-slate-400">道路段</div>
+                </div>
+                <div class="bg-slate-700 rounded-lg p-4 text-center">
+                    <div class="text-2xl font-bold text-green-400" id="stat-elev-min">278.7m</div>
+                    <div class="text-sm text-slate-400">最低高程</div>
+                </div>
+                <div class="bg-slate-700 rounded-lg p-4 text-center">
+                    <div class="text-2xl font-bold text-amber-400" id="stat-elev-max">282.1m</div>
+                    <div class="text-sm text-slate-400">最高高程</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 图数据
+        const graphData = {
+            stations: [],
+            segments: [],
+            photos: {},
+            issues: {}
+        };
+
+        // 模拟数据 - 真实Excel数据
+        const rawData = [
+            {id: 4300, name: "K4+300", elev: 278.74},
+            {id: 4305, name: "K4+305", elev: 278.785},
+            {id: 4310, name: "K4+310", elev: 278.83},
+            {id: 4315, name: "K4+315", elev: 278.875},
+            {id: 4320, name: "K4+320", elev: 278.92},
+            {id: 4325, name: "K4+325", elev: 278.965},
+            {id: 4330, name: "K4+330", elev: 279.01},
+            {id: 4335, name: "K4+335", elev: 279.055},
+            {id: 4340, name: "K4+340", elev: 279.1},
+            {id: 4345, name: "K4+345", elev: 279.145},
+            {id: 4350, name: "K4+350", elev: 279.19},
+            {id: 4355, name: "K4+355", elev: 279.235},
+            {id: 4360, name: "K4+360", elev: 279.28},
+            {id: 4365, name: "K4+365", elev: 279.325},
+            {id: 4370, name: "K4+370", elev: 279.37},
+            {id: 4375, name: "K4+375", elev: 279.415},
+            {id: 4380, name: "K4+380", elev: 279.46},
+            {id: 4385, name: "K4+385", elev: 279.505},
+            {id: 4390, name: "K4+390", elev: 279.55},
+            {id: 4395, name: "K4+395", elev: 279.595},
+            {id: 4400, name: "K4+400", elev: 279.64},
+            {id: 4405, name: "K4+405", elev: 279.685},
+            {id: 4410, name: "K4+410", elev: 279.73},
+            {id: 4415, name: "K4+415", elev: 279.775},
+            {id: 4420, name: "K4+420", elev: 279.82},
+            {id: 4425, name: "K4+425", elev: 279.865},
+            {id: 4430, name: "K4+430", elev: 279.91},
+            {id: 4435, name: "K4+435", elev: 279.955},
+            {id: 4440, name: "K4+440", elev: 280.0},
+            {id: 4445, name: "K4+445", elev: 280.045},
+            {id: 4450, name: "K4+450", elev: 280.09},
+            {id: 4455, name: "K4+455", elev: 280.135},
+            {id: 4460, name: "K4+460", elev: 280.18},
+            {id: 4465, name: "K4+465", elev: 280.225},
+            {id: 4470, name: "K4+470", elev: 280.27},
+            {id: 4475, name: "K4+475", elev: 280.315},
+            {id: 4480, name: "K4+480", elev: 280.36},
+            {id: 4485, name: "K4+485", elev: 280.405},
+            {id: 4490, name: "K4+490", elev: 280.45},
+            {id: 4495, name: "K4+495", elev: 280.495},
+            {id: 4500, name: "K4+500", elev: 280.54},
+            {id: 4505, name: "K4+505", elev: 280.585},
+            {id: 4510, name: "K4+510", elev: 280.63},
+            {id: 4515, name: "K4+515", elev: 280.675},
+            {id: 4520, name: "K4+520", elev: 280.72},
+            {id: 4525, name: "K4+525", elev: 280.765},
+            {id: 4530, name: "K4+530", elev: 280.81},
+            {id: 4535, name: "K4+535", elev: 280.855},
+            {id: 4540, name: "K4+540", elev: 280.9},
+            {id: 4545, name: "K4+545", elev: 280.945},
+            {id: 4550, name: "K4+550", elev: 280.99},
+            {id: 4555, name: "K4+555", elev: 281.035},
+            {id: 4560, name: "K4+560", elev: 281.08},
+            {id: 4565, name: "K4+565", elev: 281.125},
+            {id: 4570, name: "K4+570", elev: 281.17},
+            {id: 4575, name: "K4+575", elev: 281.215},
+            {id: 4580, name: "K4+580", elev: 281.26},
+            {id: 4585, name: "K4+585", elev: 281.305},
+            {id: 4590, name: "K4+590", elev: 281.35},
+            {id: 4595, name: "K4+595", elev: 281.395},
+            {id: 4600, name: "K4+600", elev: 281.44},
+            {id: 4605, name: "K4+605", elev: 281.485},
+            {id: 4610, name: "K4+610", elev: 281.53},
+            {id: 4615, name: "K4+615", elev: 281.575},
+            {id: 4620, name: "K4+620", elev: 281.62},
+            {id: 4625, name: "K4+625", elev: 281.665},
+            {id: 4630, name: "K4+630", elev: 281.71},
+            {id: 4635, name: "K4+635", elev: 281.755},
+            {id: 4640, name: "K4+640", elev: 281.8},
+            {id: 4645, name: "K4+645", elev: 281.845},
+            {id: 4650, name: "K4+650", elev: 281.89},
+            {id: 4655, name: "K4+655", elev: 281.935},
+            {id: 4660, name: "K4+660", elev: 281.98},
+            {id: 4665, name: "K4+665", elev: 282.025},
+            {id: 4670, name: "K4+670", elev: 282.07},
+            {id: 4675, name: "K4+675", elev: 282.115},
+            {id: 4680, name: "K4+680", elev: 282.16},
+            {id: 4685, name: "K4+685", elev: 282.205},
+            {id: 4690, name: "K4+690", elev: 282.25},
+            {id: 4695, name: "K4+695", elev: 282.295},
+            {id: 4700, name: "K4+700", elev: 282.34},
+            {id: 4705, name: "K4+705", elev: 282.385},
+            {id: 4710, name: "K4+710", elev: 282.43},
+            {id: 4715, name: "K4+715", elev: 282.475},
+            {id: 4720, name: "K4+720", elev: 282.52},
+            {id: 4725, name: "K4+725", elev: 282.565},
+            {id: 4730, name: "K4+730", elev: 282.61},
+            {id: 4735, name: "K4+735", elev: 282.655},
+            {id: 4740, name: "K4+740", elev: 282.7}
+        ];
+
+        // 添加一些示例照片和问题
+        const samplePhotos = {
+            4300: ['微信图片_202506020825381.jpg', '微信图片_202506020827451.jpg'],
+            4500: ['现场照片_裂缝.jpg'],
+            4600: ['施工照片_压实.jpg']
+        };
+
+        const sampleIssues = {
+            4300: [{type: '裂缝', severity: '轻度', desc: '路面发现轻微裂缝'}],
+            4500: [{type: '沉降', severity: '中度', desc: '需要观测'}]
+        };
+
+        // 绘制图表
+        function drawChart() {
+            const svg = document.getElementById('elevation-chart');
+            const rect = svg.getBoundingClientRect();
+            const width = rect.width || 600;
+            const height = rect.height || 300;
+            const padding = 40;
+
+            // 找到高程范围
+            const elevations = rawData.map(d => d.elev);
+            const minElev = Math.floor(Math.min(...elevations));
+            const maxElev = Math.ceil(Math.max(...elevations));
+            
+            // 计算坐标
+            const xScale = (i) => padding + (i / (rawData.length - 1)) * (width - 2 * padding);
+            const yScale = (elev) => height - padding - ((elev - minElev) / (maxElev - minElev)) * (height - 2 * padding);
+
+            // 清空
+            svg.innerHTML = '';
+
+            // 绘制网格线
+            for (let e = minElev; e <= maxElev; e += 1) {
+                const y = yScale(e);
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', padding);
+                line.setAttribute('y1', y);
+                line.setAttribute('x2', width - padding);
+                line.setAttribute('y2', y);
+                line.setAttribute('stroke', '#334155');
+                line.setAttribute('stroke-dasharray', '4');
+                svg.appendChild(line);
+
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', padding - 5);
+                text.setAttribute('y', y + 4);
+                text.setAttribute('fill', '#64748b');
+                text.setAttribute('font-size', '10');
+                text.setAttribute('text-anchor', 'end');
+                text.textContent = e.toFixed(1);
+                svg.appendChild(text);
+            }
+
+            // 绘制曲线
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            let pathD = '';
+            rawData.forEach((d, i) => {
+                const x = xScale(i);
+                const y = yScale(d.elev);
+                pathD += (i === 0 ? 'M' : 'L') + x + ',' + y;
+            });
+            path.setAttribute('d', pathD);
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke', '#06b6d4');
+            path.setAttribute('stroke-width', '2');
+            svg.appendChild(path);
+
+            // 绘制采样点
+            const step = Math.floor(rawData.length / 20); // 每20个点画一个
+            rawData.forEach((d, i) => {
+                if (i % step !== 0 && i !== rawData.length - 1) return;
+                
+                const x = xScale(i);
+                const y = yScale(d.elev);
+
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', x);
+                circle.setAttribute('cy', y);
+                circle.setAttribute('r', '6');
+                circle.setAttribute('fill', '#06b6d4');
+                circle.setAttribute('class', 'station-point');
+                circle.setAttribute('data-id', d.id);
+                circle.setAttribute('data-name', d.name);
+                circle.setAttribute('data-elev', d.elev);
+                circle.onclick = () => showStationInfo(d.id, d.name, d.elev);
+                svg.appendChild(circle);
+            });
+        }
+
+        // 显示桩号详情
+        function showStationInfo(id, name, elev) {
+            const container = document.getElementById('station-info');
+            
+            const photos = samplePhotos[id] || [];
+            const issues = sampleIssues[id] || [];
+
+            let html = `
+                <div class="bg-slate-700 rounded-lg p-4">
+                    <div class="text-2xl font-bold text-cyan-400 mb-2">${name}</div>
+                    <div class="text-lg text-white">高程: <span class="text-amber-400">${elev.toFixed(2)}m</span></div>
+                    <div class="text-sm text-slate-400">桩号ID: ${id}</div>
+                </div>
+            `;
+
+            if (photos.length > 0) {
+                html += `
+                    <div class="bg-slate-700 rounded-lg p-4">
+                        <div class="font-bold text-purple-400 mb-2">📷 照片 (${photos.length})</div>
+                        <div class="space-y-1">
+                            ${photos.map(p => `<div class="text-sm text-slate-300">${p}</div>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (issues.length > 0) {
+                html += `
+                    <div class="bg-slate-700 rounded-lg p-4">
+                        <div class="font-bold text-red-400 mb-2">❗ 问题 (${issues.length})</div>
+                        <div class="space-y-2">
+                            ${issues.map(i => `
+                                <div class="bg-slate-800 rounded p-2">
+                                    <div class="text-sm font-bold">${i.type}</div>
+                                    <div class="text-xs text-slate-400">${i.severity} - ${i.desc}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (photos.length === 0 && issues.length === 0) {
+                html += `
+                    <div class="bg-slate-700 rounded-lg p-4 text-center text-slate-400">
+                        暂无照片和问题
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // 搜索
+        function searchStation() {
+            const input = document.getElementById('search-input').value.trim();
+            if (!input) return;
+
+            // 解析桩号
+            const match = input.match(/^(K|ZK|YK)?(\d+)\+(\d{1,3})$/);
+            if (match) {
+                const km = parseInt(match[2]);
+                const offset = parseInt(match[3]);
+                const id = km * 1000 + offset;
+                
+                // 找到最近的桩号
+                const found = rawData.find(d => d.id === id);
+                if (found) {
+                    showStationInfo(found.id, found.name, found.elev);
+                    return;
+                }
+
+                // 查找最近的
+                let closest = rawData[0];
+                let minDist = Math.abs(rawData[0].id - id);
+                for (const d of rawData) {
+                    const dist = Math.abs(d.id - id);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        closest = d;
+                    }
+                }
+                
+                if (minDist <= 50) {
+                    showStationInfo(closest.id, closest.name, closest.elev);
+                } else {
+                    alert('未找到该桩号');
+                }
+            } else {
+                alert('请输入正确的桩号格式，如 K4+500');
+            }
+        }
+
+        // 回车搜索
+        document.getElementById('search-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchStation();
+        });
+
+        // 更新统计
+        document.getElementById('stat-stations').textContent = rawData.length;
+        document.getElementById('stat-segments').textContent = rawData.length - 1;
+        
+        const elevations = rawData.map(d => d.elev);
+        document.getElementById('stat-elev-min').textContent = Math.min(...elevations).toFixed(1) + 'm';
+        document.getElementById('stat-elev-max').textContent = Math.max(...elevations).toFixed(1) + 'm';
+
+        // 初始化
+        drawChart();
+        showStationInfo(4300, 'K4+300', 278.74);
+    </script>
+</body>
+</html>

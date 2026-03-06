@@ -1,0 +1,111 @@
+# -*- coding: utf-8 -*-
+"""
+API图表模板
+"""
+
+CHART_API_TEMPLATE = '''
+@router.get("/{{ table_name }}/chart")
+async def get_{{ table_name }}_chart(
+    {%- for param in params %}
+    {{ param.name }}: {{ param.type }} = {{ param.default }},
+    {%- endfor %}
+):
+    """
+    获取{{ table_name }}图表数据
+    
+    {%- if description %}
+    {{ description }}
+    {%- endif %}
+    """
+    # 根据图表类型构建不同的SQL
+    {%- if chart_type == "line" %}
+    query = """
+        SELECT 
+            {{ x_field }} as x,
+            {{ y_field }} as y
+        FROM {{ table_name }}
+        {%- if conditions %}
+        WHERE {{ conditions }}
+        {%- endif %}
+        GROUP BY {{ x_field }}
+        ORDER BY {{ x_field }}
+    """
+    {%- elif chart_type == "pie" %}
+    query = """
+        SELECT 
+            {{ group_by }} as name,
+            COUNT(*) as value
+        FROM {{ table_name }}
+        {%- if conditions %}
+        WHERE {{ conditions }}
+        {%- endif %}
+        GROUP BY {{ group_by }}
+        ORDER BY value DESC
+    """
+    {%- else %}  {# bar #}
+    query = """
+        SELECT 
+            {{ group_by }} as x,
+            COUNT(*) as y
+        FROM {{ table_name }}
+        {%- if conditions %}
+        WHERE {{ conditions }}
+        {%- endif %}
+        GROUP BY {{ group_by }}
+        ORDER BY y DESC
+    """
+    {%- endif %}
+    
+    params = {
+        {%- for param in params %}
+        "{{ param.name }}": {{ param.name }},
+        {%- endfor %}
+    }
+    
+    result = await db.fetch_all(query, params)
+    
+    # 构建ECharts配置
+    {%- if chart_type == "line" %}
+    chart_option = {
+        "title": {"text": "{{ title }}"},
+        "tooltip": {"trigger": "axis"},
+        "xAxis": {"type": "category", "data": [row["x"] for row in result]},
+        "yAxis": {"type": "value"},
+        "series": [{
+            "data": [row["y"] for row in result],
+            "type": "line",
+            "smooth": true
+        }]
+    }
+    {%- elif chart_type == "pie" %}
+    chart_option = {
+        "title": {"text": "{{ title }}"},
+        "tooltip": {"trigger": "item"},
+        "series": [{
+            "type": "pie",
+            "radius": "60%",
+            "data": result
+        }]
+    }
+    {%- else %}  {# bar #}
+    chart_option = {
+        "title": {"text": "{{ title }}"},
+        "tooltip": {"trigger": "axis"},
+        "xAxis": {"type": "category", "data": [row["x"] for row in result]},
+        "yAxis": {"type": "value"},
+        "series": [{
+            "data": [row["y"] for row in result],
+            "type": "bar"
+        }]
+    }
+    {%- endif %}
+    
+    return {
+        "code": 0,
+        "message": "success",
+        "data": {
+            "chart_option": chart_option,
+            "raw_data": result
+        }
+    }
+'''

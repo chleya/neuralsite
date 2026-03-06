@@ -1,0 +1,101 @@
+# -*- coding: utf-8 -*-
+"""
+SQL查询模板
+"""
+
+SELECT_SQL_TEMPLATE = '''
+-- 查询{{ table_name }}数据
+SELECT 
+    {%- if fields %}
+    {{ fields | join(', ') }},
+    {%- else %}
+    *,
+    {%- endif %}
+    id,
+    created_at,
+    updated_at
+FROM {{ table_name }}
+{%- if conditions %}
+WHERE {{ conditions }}
+{%- endif %}
+{%- if order_by %}
+ORDER BY {{ order_by }}
+{%- endif %}
+{%- if limit %}
+LIMIT {{ limit }}
+{%- endif %}
+;
+'''
+
+SELECT_WITH_PAGINATION_TEMPLATE = '''
+-- 分页查询{{ table_name }}
+-- 参数: page={{ page }}, size={{ size }}
+SELECT 
+    {%- if fields %}
+    {{ fields | join(', ') }},
+    {%- else %}
+    *,
+    {%- endif %}
+    id,
+    created_at,
+    updated_at
+FROM {{ table_name }}
+{%- if conditions %}
+WHERE {{ conditions }}
+{%- endif %}
+ORDER BY id DESC
+LIMIT {{ size }} OFFSET ({{ page }} - 1) * {{ size }}
+;
+
+-- 查询总数
+SELECT COUNT(*) as total
+FROM {{ table_name }}
+{%- if conditions %}
+WHERE {{ conditions }}
+{%- endif %}
+;
+'''
+
+SELECT_DETAIL_TEMPLATE = '''
+-- 查询{{ table_name }}详情
+SELECT *
+FROM {{ table_name }}
+WHERE id = :id
+;
+'''
+
+SELECT_BY_CONDITIONS_TEMPLATE = '''
+-- 条件查询{{ table_name }}
+SELECT 
+    {%- if fields %}
+    {{ fields | join(', ') }},
+    {%- else %}
+    *,
+    {%- endif %}
+    id,
+    created_at,
+    updated_at
+FROM {{ table_name }}
+WHERE 1=1
+{%- if date_start %}
+    AND created_at >= '{{ date_start }}'
+{%- endif %}
+{%- if date_end %}
+    AND created_at <= '{{ date_end }}'
+{%- endif %}
+{%- if station_start %}
+    AND station >= '{{ station_start }}'
+{%- endif %}
+{%- if station_end %}
+    AND station <= '{{ station_end }}'
+{%- endif %}
+{%- for field, value in other_filters.items() %}
+    AND {{ field }} = '{{ value }}'
+{%- endfor %}
+{%- if order_by %}
+ORDER BY {{ order_by }}
+{%- else %}
+ORDER BY id DESC
+{%- endif %}
+;
+'''

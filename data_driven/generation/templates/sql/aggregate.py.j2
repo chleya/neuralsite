@@ -1,0 +1,124 @@
+# -*- coding: utf-8 -*-
+"""
+SQL聚合模板
+"""
+
+COUNT_SQL_TEMPLATE = '''
+-- 统计{{ table_name }}数量
+SELECT COUNT(*) as total
+FROM {{ table_name }}
+{%- if conditions %}
+WHERE {{ conditions }}
+{%- endif %}
+;
+'''
+
+GROUP_COUNT_SQL_TEMPLATE = '''
+-- 按{{ group_by }}统计{{ table_name }}数量
+SELECT 
+    {{ group_by }},
+    COUNT(*) as count
+FROM {{ table_name }}
+{%- if conditions %}
+WHERE {{ conditions }}
+{%- endif %}
+GROUP BY {{ group_by }}
+{%- if order_by %}
+ORDER BY {{ order_by }}
+{%- else %}
+ORDER BY count DESC
+{%- endif %}
+;
+'''
+
+DATE_GROUP_COUNT_SQL_TEMPLATE = '''
+-- 按日期统计{{ table_name }}数量
+SELECT 
+    DATE(created_at) as date,
+    COUNT(*) as count
+FROM {{ table_name }}
+{%- if conditions %}
+WHERE {{ conditions }}
+{%- endif %}
+GROUP BY DATE(created_at)
+ORDER BY date
+;
+'''
+
+STATUS_COUNT_SQL_TEMPLATE = '''
+-- 按状态统计{{ table_name }}
+SELECT 
+    status,
+    COUNT(*) as count,
+    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM {{ table_name }}), 2) as percentage
+FROM {{ table_name }}
+{%- if conditions %}
+WHERE {{ conditions }}
+{%- endif %}
+GROUP BY status
+ORDER BY count DESC
+;
+'''
+
+TREND_SQL_TEMPLATE = '''
+-- 趋势分析{{ table_name }}
+SELECT 
+    {%- if time_unit == 'day' %}
+    DATE(created_at) as time,
+    {%- elif time_unit == 'week' %}
+    YEARWEEK(created_at, 1) as time,
+    {%- elif time_unit == 'month' %}
+    DATE_FORMAT(created_at, '%Y-%m') as time,
+    {%- else %}
+    DATE(created_at) as time,
+    {%- endif %}
+    COUNT(*) as count
+FROM {{ table_name }}
+{%- if conditions %}
+WHERE {{ conditions }}
+{%- endif %}
+GROUP BY time
+ORDER BY time
+;
+'''
+
+COMPARISON_SQL_TEMPLATE = '''
+-- 对比分析{{ table_name }}
+SELECT 
+    {{ group_by }},
+    {%- for metric in metrics %}
+    {{ metric }} as {{ metric }},
+    {%- endfor %}
+    COUNT(*) as total_count
+FROM {{ table_name }}
+{%- if conditions %}
+WHERE {{ conditions }}
+{%- endif %}
+GROUP BY {{ group_by }}
+{%- if order_by %}
+ORDER BY {{ order_by }}
+{%- else %}
+ORDER BY total_count DESC
+{%- endif %}
+;
+'''
+
+PERIOD_COMPARISON_SQL_TEMPLATE = '''
+-- 周期对比{{ table_name }}
+SELECT 
+    '当前周期' as period,
+    COUNT(*) as count
+FROM {{ table_name }}
+WHERE created_at >= '{{ current_period_start }}'
+    AND created_at < '{{ current_period_end }}'
+
+UNION ALL
+
+SELECT 
+    '上周期' as period,
+    COUNT(*) as count
+FROM {{ table_name }}
+WHERE created_at >= '{{ previous_period_start }}'
+    AND created_at < '{{ previous_period_end }}'
+;
+'''

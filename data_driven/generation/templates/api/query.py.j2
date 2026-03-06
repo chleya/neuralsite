@@ -1,0 +1,103 @@
+# -*- coding: utf-8 -*-
+"""
+API查询模板
+"""
+
+QUERY_API_TEMPLATE = '''
+@router.get("/{{ table_name }}")
+async def get_{{ table_name }}(
+    {%- for param in params %}
+    {{ param.name }}: {{ param.type }} = {{ param.default }},
+    {%- endfor %}
+):
+    """
+    获取{{ table_name }}数据
+    
+    {%- if description %}
+    {{ description }}
+    {%- endif %}
+    """
+    query = """
+        SELECT {{ fields }}
+        FROM {{ table_name }}
+        {%- if conditions %}
+        WHERE {{ conditions }}
+        {%- endif %}
+        {%- if order_by %}
+        ORDER BY {{ order_by }}
+        {%- endif %}
+        {%- if limit %}
+        LIMIT {{ limit }}
+        {%- endif %}
+    """
+    
+    params = {
+        {%- for param in params %}
+        "{{ param.name }}": {{ param.name }},
+        {%- endfor %}
+    }
+    
+    result = await db.fetch_all(query, params)
+    return {
+        "code": 0,
+        "message": "success",
+        "data": result,
+        "total": len(result)
+    }
+'''
+
+COUNT_API_TEMPLATE = '''
+@router.get("/{{ table_name }}/count")
+async def get_{{ table_name }}_count(
+    {%- for param in params %}
+    {{ param.name }}: {{ param.type }} = {{ param.default }},
+    {%- endfor %}
+):
+    """
+    获取{{ table_name }}数量
+    """
+    query = """
+        SELECT COUNT(*) as total
+        FROM {{ table_name }}
+        {%- if conditions %}
+        WHERE {{ conditions }}
+        {%- endif %}
+    """
+    
+    params = {
+        {%- for param in params %}
+        "{{ param.name }}": {{ param.name }},
+        {%- endfor %}
+    }
+    
+    result = await db.fetch_one(query, params)
+    return {
+        "code": 0,
+        "message": "success",
+        "data": {"total": result["total"]}
+    }
+'''
+
+DETAIL_API_TEMPLATE = '''
+@router.get("/{{ table_name }}/{{ id_name }}")
+async def get_{{ table_name }}_detail({{ id_name }}: int):
+    """
+    获取{{ table_name }}详情
+    """
+    query = """
+        SELECT *
+        FROM {{ table_name }}
+        WHERE {{ id_name }} = :{{ id_name }}
+    """
+    
+    result = await db.fetch_one(query, {"{{ id_name }}": {{ id_name }}})
+    
+    if not result:
+        raise HTTPException(status_code=404, message="{{ table_name }} not found")
+    
+    return {
+        "code": 0,
+        "message": "success",
+        "data": result
+    }
+'''

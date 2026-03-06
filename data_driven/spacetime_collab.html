@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>时空协作系统 - NeuralSite V1.1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Noto Sans SC', sans-serif; background: #0f172a; color: #e2e8f0; }
+        .cursor-pointer { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Header -->
+    <div class="bg-slate-800 border-b border-slate-700 p-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <h1 class="text-xl font-bold text-cyan-400">🛣️ 时空协作系统 V1.1</h1>
+                <span class="text-slate-400">|</span>
+                <span class="text-slate-300">京沪高速拓宽工程</span>
+                <span class="px-2 py-1 bg-green-600 rounded text-xs">3人在线</span>
+            </div>
+            <div class="flex gap-2">
+                <div class="flex -space-x-2">
+                    <div class="w-8 h-8 rounded-full bg-cyan-500 border-2 border-slate-800 flex items-center justify-center text-xs">张</div>
+                    <div class="w-8 h-8 rounded-full bg-purple-500 border-2 border-slate-800 flex items-center justify-center text-xs">李</div>
+                    <div class="w-8 h-8 rounded-full bg-amber-500 border-2 border-slate-800 flex items-center justify-center text-xs">王</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <!-- 3D View (Main) -->
+        <div class="lg:col-span-3 bg-slate-800 rounded-xl p-4 relative">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold">🎮 3D协作场景</h2>
+                <div class="flex gap-2">
+                    <span class="px-2 py-1 bg-slate-700 rounded text-xs">👆 点击实体查看详情</span>
+                    <span class="px-2 py-1 bg-slate-700 rounded text-xs">🔒 锁定的变红</span>
+                </div>
+            </div>
+            
+            <!-- Mock 3D Scene -->
+            <div class="bg-slate-900 rounded-lg h-96 relative overflow-hidden" id="scene">
+                <!-- Road segments -->
+                <div class="absolute bottom-20 left-10 right-10 h-32 bg-gradient-to-r from-slate-700 via-cyan-700 to-slate-700 rounded">
+                    <div class="absolute top-0 left-0 right-0 h-1 bg-yellow-400"></div>
+                </div>
+                
+                <!-- Entity markers -->
+                <div class="entity-marker absolute bottom-40 left-1/4 w-12 h-12 bg-cyan-500 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition"
+                     onclick="showEntityPanel('pav-5000')" data-entity="pav-5000">
+                    <span class="text-xs">K5+000</span>
+                </div>
+                
+                <div class="entity-marker absolute bottom-40 left-2/4 w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition"
+                     onclick="showEntityPanel('pav-5200')" data-entity="pav-5200">
+                    <span class="text-xs">K5+200</span>
+                </div>
+                
+                <div class="entity-marker absolute bottom-40 right-1/4 w-12 h-12 bg-red-500 rounded-full flex items-center justify-center cursor-pointer animate-pulse"
+                     onclick="showEntityPanel('pav-5400')" data-entity="pav-5400">
+                    <span class="text-xs">🔒</span>
+                </div>
+                
+                <!-- User cursors -->
+                <div class="absolute top-20 right-20 flex items-center gap-1 bg-slate-800 px-2 py-1 rounded cursor-pointer">
+                    <div class="w-6 h-6 rounded-full bg-cyan-500 flex items-center justify-center text-xs">张</div>
+                    <span class="text-xs">K5+200</span>
+                </div>
+                
+                <div class="absolute top-32 right-32 flex items-center gap-1 bg-slate-800 px-2 py-1 rounded cursor-pointer">
+                    <div class="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center text-xs">李</div>
+                    <span class="text-xs">K5+400</span>
+                </div>
+            </div>
+            
+            <!-- Timeline -->
+            <div class="mt-4">
+                <div class="flex justify-between text-sm text-slate-400 mb-2">
+                    <span>初始</span>
+                    <span id="timeline-label">当前: 85%</span>
+                    <span>设计完成</span>
+                </div>
+                <input type="range" id="timeline" min="0" max="30" value="25" 
+                       class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                       oninput="updateTimeline(this.value)">
+                <div class="flex justify-between text-xs text-slate-500 mt-1">
+                    <span>Day 0</span>
+                    <span>Day 15</span>
+                    <span>Day 30 (模拟模式)</span>
+                </div>
+            </div>
+            
+            <!-- Mode toggle -->
+            <div class="mt-4 flex gap-2">
+                <button class="px-4 py-2 bg-green-600 rounded-lg" onclick="setMode('live')">🏃 Live模式</button>
+                <button class="px-4 py-2 bg-amber-600 rounded-lg" onclick="setMode('simulate')">🎮 沙盘模拟</button>
+            </div>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="space-y-4">
+            <!-- Entity Detail Panel -->
+            <div class="bg-slate-800 rounded-xl p-4" id="entity-panel">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="font-bold text-cyan-400">PAV-K5+000</h3>
+                        <p class="text-xs text-slate-400">路面工程</p>
+                    </div>
+                    <span class="px-2 py-1 bg-yellow-600 rounded text-xs">🔒 李监理锁定中</span>
+                </div>
+                
+                <div class="space-y-3">
+                    <div class="bg-slate-700 rounded p-3">
+                        <div class="text-sm text-slate-400">当前进度</div>
+                        <div class="text-2xl font-bold text-cyan-400">85%</div>
+                    </div>
+                    
+                    <div class="bg-slate-700 rounded p-3">
+                        <div class="text-sm text-slate-400">状态类型</div>
+                        <div class="font-bold text-purple-400">实际(Actual)</div>
+                    </div>
+                    
+                    <div class="bg-slate-700 rounded p-3">
+                        <div class="text-sm text-slate-400">最近照片</div>
+                        <div class="flex gap-2 mt-2">
+                            <div class="w-12 h-12 bg-slate-600 rounded flex items-center justify-center">📷</div>
+                            <div class="w-12 h-12 bg-slate-600 rounded flex items-center justify-center">📷</div>
+                            <div class="w-12 h-12 bg-slate-600 rounded flex items-center justify-center">📷</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-slate-700 rounded p-3">
+                        <div class="text-sm text-slate-400">未解决问题</div>
+                        <div class="mt-2 space-y-1">
+                            <div class="flex items-center gap-2 text-xs">
+                                <span class="px-1 bg-red-600 rounded">裂缝</span>
+                                <span>K5+050</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-xs">
+                                <span class="px-1 bg-yellow-600 rounded">破损</span>
+                                <span>K5+150</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="w-full py-2 bg-red-600 hover:bg-red-700 rounded-lg">❗ 上报问题</button>
+                </div>
+            </div>
+
+            <!-- Activity Log -->
+            <div class="bg-slate-800 rounded-xl p-4">
+                <h3 class="font-bold mb-3">📋 协作日志</h3>
+                <div class="space-y-2 text-sm" id="activity-log">
+                    <div class="flex gap-2 text-slate-400">
+                        <span class="text-cyan-400">李监理</span>
+                        <span>正在审核 K5+000</span>
+                    </div>
+                    <div class="flex gap-2 text-slate-400">
+                        <span class="text-purple-400">张施工</span>
+                        <span>更新进度至 85%</span>
+                    </div>
+                    <div class="flex gap-2 text-slate-400">
+                        <span class="text-amber-400">王业主</span>
+                        <span>进入查看</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Online Users -->
+            <div class="bg-slate-800 rounded-xl p-4">
+                <h3 class="font-bold mb-3">👥 在线用户 (3)</h3>
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full bg-cyan-500 flex items-center justify-center text-xs">张</div>
+                        <div>
+                            <div class="text-sm">张施工</div>
+                            <div class="text-xs text-slate-400">K5+200</div>
+                        </div>
+                        <span class="ml-auto w-2 h-2 bg-green-500 rounded-full"></span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-xs">李</div>
+                        <div>
+                            <div class="text-sm">李监理</div>
+                            <div class="text-xs text-slate-400">K5+000 (锁定中)</div>
+                        </div>
+                        <span class="ml-auto w-2 h-2 bg-yellow-500 rounded-full"></span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center text-xs">王</div>
+                        <div>
+                            <div class="text-sm">王业主</div>
+                            <div class="text-xs text-slate-400">K5+400</div>
+                        </div>
+                        <span class="ml-auto w-2 h-2 bg-green-500 rounded-full"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conflict Alert -->
+    <div id="conflict-alert" class="fixed bottom-4 right-4 bg-red-600 text-white p-4 rounded-lg shadow-lg hidden">
+        <div class="flex items-center gap-2">
+            <span>⚠️</span>
+            <span>检测到冲突！正在自动合并...</span>
+        </div>
+    </div>
+
+    <script>
+        // Mock entity data
+        const entityData = {
+            'pav-5000': {
+                code: 'PAV-K5+000',
+                type: '路面',
+                progress: 85,
+                status: 'actual',
+                locked: true,
+                lockedBy: '李监理',
+                photos: 3,
+                issues: 2
+            },
+            'pav-5200': {
+                code: 'PAV-K5+200',
+                type: '路面',
+                progress: 92,
+                status: 'actual',
+                locked: false,
+                photos: 5,
+                issues: 0
+            },
+            'pav-5400': {
+                code: 'PAV-K5+400',
+                type: '路面',
+                progress: 78,
+                status: 'actual',
+                locked: true,
+                lockedBy: '李监理',
+                photos: 2,
+                issues: 1
+            }
+        };
+
+        // Show entity panel
+        function showEntityPanel(entityId) {
+            const data = entityData[entityId];
+            if (!data) return;
+            
+            const panel = document.getElementById('entity-panel');
+            
+            let lockBadge = data.locked 
+                ? `<span class="px-2 py-1 bg-yellow-600 rounded text-xs">🔒 ${data.lockedBy}锁定中</span>`
+                : `<span class="px-2 py-1 bg-green-600 rounded text-xs">可编辑</span>`;
+            
+            let issuesHtml = '';
+            if (data.issues > 0) {
+                issuesHtml = `
+                    <div class="bg-slate-700 rounded p-3">
+                        <div class="text-sm text-slate-400">未解决问题</div>
+                        <div class="mt-2 text-red-400">${data.issues}个问题待处理</div>
+                    </div>
+                `;
+            }
+            
+            panel.innerHTML = `
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="font-bold text-cyan-400">${data.code}</h3>
+                        <p class="text-xs text-slate-400">${data.type}</p>
+                    </div>
+                    ${lockBadge}
+                </div>
+                
+                <div class="space-y-3">
+                    <div class="bg-slate-700 rounded p-3">
+                        <div class="text-sm text-slate-400">当前进度</div>
+                        <div class="text-2xl font-bold text-cyan-400">${data.progress}%</div>
+                    </div>
+                    
+                    <div class="bg-slate-700 rounded p-3">
+                        <div class="text-sm text-slate-400">状态类型</div>
+                        <div class="font-bold text-purple-400">${data.status === 'actual' ? '实际(Actual)' : '设计(Designed)'}</div>
+                    </div>
+                    
+                    <div class="bg-slate-700 rounded p-3">
+                        <div class="text-sm text-slate-400">照片</div>
+                        <div class="text-xl">${data.photos}张</div>
+                    </div>
+                    
+                    ${issuesHtml}
+                    
+                    ${data.locked 
+                        ? `<button class="w-full py-2 bg-slate-600 rounded-lg cursor-not-allowed" disabled>锁定中...</button>`
+                        : `<button class="w-full py-2 bg-cyan-600 hover:bg-cyan-700 rounded-lg" onclick="updateProgress('${entityId}')">📝 更新进度</button>`
+                    }
+                </div>
+            `;
+        }
+
+        // Update timeline
+        function updateTimeline(value) {
+            const progress = 85 + (100 - 85) * (value / 30);
+            document.getElementById('timeline-label').textContent = `当前: ${Math.round(progress)}%`;
+        }
+
+        // Set mode
+        function setMode(mode) {
+            if (mode === 'simulate') {
+                alert('🎮 进入沙盘模拟模式\n\n拖动时间轴不会影响实际数据\n所有人将同步看到模拟结果');
+            } else {
+                alert('🏃 进入Live模式\n\n实时数据更新将同步给所有人');
+            }
+        }
+
+        // Update progress
+        function updateProgress(entityId) {
+            // Simulate conflict
+            if (Math.random() > 0.7) {
+                document.getElementById('conflict-alert').classList.remove('hidden');
+                setTimeout(() => {
+                    document.getElementById('conflict-alert').classList.add('hidden');
+                    alert('✅ 冲突已自动合并！进度取最大值，状态取最新');
+                }, 2000);
+            } else {
+                alert('✅ 进度已更新并广播给所有人');
+            }
+        }
+
+        // Initialize
+        showEntityPanel('pav-5000');
+    </script>
+</body>
+</html>

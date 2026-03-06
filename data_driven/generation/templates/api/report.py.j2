@@ -1,0 +1,104 @@
+# -*- coding: utf-8 -*-
+"""
+API报表模板
+"""
+
+REPORT_API_TEMPLATE = '''
+@router.get("/{{ table_name }}/report")
+async def get_{{ table_name }}_report(
+    {%- for param in params %}
+    {{ param.name }}: {{ param.type }} = {{ param.default }},
+    {%- endfor %}
+):
+    """
+    获取{{ table_name }}报表数据
+    
+    {%- if description %}
+    {{ description }}
+    {%- endif %}
+    """
+    query = """
+        SELECT 
+            {{ group_by }},
+            COUNT(*) as count
+        FROM {{ table_name }}
+        {%- if conditions %}
+        WHERE {{ conditions }}
+        {%- endif %}
+        GROUP BY {{ group_by }}
+        {%- if order_by %}
+        ORDER BY {{ order_by }}
+        {%- endif %}
+    """
+    
+    params = {
+        {%- for param in params %}
+        "{{ param.name }}": {{ param.name }},
+        {%- endfor %}
+    }
+    
+    result = await db.fetch_all(query, params)
+    
+    # 转换为图表数据格式
+    x_data = [row["{{ group_by }}"] for row in result]
+    y_data = [row["count"] for row in result]
+    
+    return {
+        "code": 0,
+        "message": "success",
+        "data": {
+            "table": result,
+            "chart": {
+                "x": x_data,
+                "y": y_data
+            }
+        }
+    }
+'''
+
+SUMMARY_API_TEMPLATE = '''
+@router.get("/{{ table_name }}/summary")
+async def get_{{ table_name }}_summary(
+    {%- for param in params %}
+    {{ param.name }}: {{ param.type }} = {{ param.default }},
+    {%- endfor %}
+):
+    """
+    获取{{ table_name }}汇总统计
+    """
+    query = """
+        SELECT 
+            COUNT(*) as total_count,
+            {%- if date_field %}
+            DATE({{ date_field }}) as date,
+            {%- endif %}
+            {%- if status_field %}
+            {{ status_field }},
+            {%- endif %}
+            COUNT(*) as count
+        FROM {{ table_name }}
+        {%- if conditions %}
+        WHERE {{ conditions }}
+        {%- endif %}
+        {%- if date_field or status_field %}
+        GROUP BY 
+            {%- if date_field %}DATE({{ date_field }}),{%- endif %}
+            {%- if status_field %}{{ status_field }}{%- endif %}
+        {%- endif %}
+        ORDER BY count DESC
+    """
+    
+    params = {
+        {%- for param in params %}
+        "{{ param.name }}": {{ param.name }},
+        {%- endfor %}
+    }
+    
+    result = await db.fetch_all(query, params)
+    
+    return {
+        "code": 0,
+        "message": "success",
+        "data": result
+    }
+'''

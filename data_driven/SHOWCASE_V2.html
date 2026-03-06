@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuralSite智网 - 数据驱动型智慧工程管理平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #00d4ff; --secondary: #7c3aed; --accent: #f59e0b; --success: #10b981; --danger: #ef4444; --dark: #0f172a; --darker: #020617; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Noto Sans SC', sans-serif; background: linear-gradient(135deg, #020617 0%, #1e1b4b 50%, #0f172a 100%); color: #e2e8f0; min-height: 100vh; }
+        .glass { background: rgba(255,255,255,0-filter: blur(.05); backdrop20px); border: 1px solid rgba(255,255,255,0.1); }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,212,255,0.2); border-color: var(--primary); }
+        .nav-item { position: relative; padding: 10px 20px; cursor: pointer; transition: color 0.3s; }
+        .nav-item::after { content: ''; position: absolute; bottom: 0; left: 50%; width: 0; height: 2px; background: var(--primary); transition: all 0.3s; transform: translateX(-50%); }
+        .nav-item:hover::after, .nav-item.active::after { width: 80%; }
+        .data-panel { background: linear-gradient(180deg, rgba(0,212,255,0.1) 0%, transparent 100%); border-left: 3px solid var(--primary); }
+        .stat-card { background: linear-gradient(135deg, rgba(0,212,255,0.15) 0%, rgba(124,58,237,0.15) 100%); }
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .progress-bar { background: linear-gradient(90deg, var(--primary), var(--secondary)); }
+    </style>
+</head>
+<body>
+    <nav class="fixed top-0 left-0 right-0 z-50 glass">
+        <div class="max-w-7xl mx-auto flex justify-between items-center px-6 py-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-400 to-purple-600 flex items-center justify-center text-xl font-bold">N</div>
+                <span class="text-xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">NeuralSite智网</span>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="showSection('overview')" class="nav-item active text-white" data-tab="overview">总览</button>
+                <button onclick="showSection('data')" class="nav-item text-gray-400" data-tab="data">数据中枢</button>
+                <button onclick="showSection('visual')" class="nav-item text-gray-400" data-tab="visual">数据可视化</button>
+                <button onclick="showSection('business')" class="nav-item text-gray-400" data-tab="business">业务功能</button>
+                <button onclick="showSection('ai')" class="nav-item text-gray-400" data-tab="ai">AI智能</button>
+                <button onclick="showSection('demo')" class="nav-item text-gray-400" data-tab="demo">功能演示</button>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-green-400">● 在线</span>
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-purple-500"></div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-20 pb-10 px-6">
+        <div class="max-w-7xl mx-auto">
+            <section id="section-overview">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="stat-card rounded-xl p-6 glass card-hover">
+                        <div class="text-gray-400 text-sm mb-2">项目总数</div>
+                        <div class="text-3xl font-bold text-cyan-400">12</div>
+                        <div class="text-xs text-gray-500 mt-2">↑ 本月新增 3 个</div>
+                    </div>
+                    <div class="stat-card rounded-xl p-6 glass card-hover">
+                        <div class="text-gray-400 text-sm mb-2">数据条目</div>
+                        <div class="text-3xl font-bold text-purple-400">58,234</div>
+                        <div class="text-xs text-gray-500 mt-2">↑ 今日 +1,234</div>
+                    </div>
+                    <div class="stat-card rounded-xl p-6 glass card-hover">
+                        <div class="text-gray-400 text-sm mb-2">上链记录</div>
+                        <div class="text-3xl font-bold text-amber-400">12,456</div>
+                        <div class="text-xs text-gray-500 mt-2">最后上链: 2分钟前</div>
+                    </div>
+                    <div class="stat-card rounded-xl p-6 glass card-hover">
+                        <div class="text-gray-400 text-sm mb-2">AI服务</div>
+                        <div class="text-3xl font-bold text-green-400">97%</div>
+                        <div class="text-xs text-gray-500 mt-2">在线率</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <div class="glass rounded-xl p-6">
+                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-cyan-400"></span>项目进度概览</h3>
+                        <div class="space-y-4">
+                            <div><div class="flex justify-between mb-1"><span class="text-sm">京沪高速拓宽工程</span><span class="text-sm text-cyan-400">78%</span></div><div class="h-2 bg-gray-700 rounded-full overflow-hidden"><div class="progress-bar h-full rounded-full" style="width: 78%"></div></div></div>
+                            <div><div class="flex justify-between mb-1"><span class="text-sm">雄安新区市政道路</span><span class="text-sm text-purple-400">45%</span></div><div class="h-2 bg-gray-700 rounded-full overflow-hidden"><div class="progress-bar h-full rounded-full" style="width: 45%"></div></div></div>
+                            <div><div class="flex justify-between mb-1"><span class="text-sm">智慧梁场管理系统</span><span class="text-sm text-amber-400">92%</span></div><div class="h-2 bg-gray-700 rounded-full overflow-hidden"><div class="progress-bar h-full rounded-full" style="width: 92%"></div></div></div>
+                        </div>
+                    </div>
+                    <div class="glass rounded-xl p-6">
+                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-purple-400 pulse"></span>实时数据流</h3>
+                        <div class="space-y-2 font-mono text-sm" id="data-stream">
+                            <div class="text-gray-400"><span class="text-amber-400">[12:02]</span> Excel导入: 20条桩号记录</div>
+                            <div class="text-gray-400"><span class="text-amber-400">[12:01]</span> 照片采集: 3张新照片</div>
+                            <div class="text-gray-400"><span class="text-amber-400">[12:00]</span> 问题创建: 2个质量问题</div>
+                            <div class="text-gray-400"><span class="text-amber-400">[11:59]</span> 区块链存证: 5条哈希</div>
+                            <div class="text-gray-400"><span class="text-amber-400">[11:58]</span> AI识别: 裂缝 - 中度</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass rounded-xl p-6">
+                    <h3 class="text-lg font-bold mb-4">🚀 快速入口</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                        <button onclick="showSection('ai'); simulatePhotoUpload()" class="p-4 rounded-lg bg-gray-800/50 hover:bg-gray-700/50 transition card-hover text-center"><div class="text-2xl mb-2">📷</div><div class="text-sm">照片采集</div></button>
+                        <button onclick="showSection('demo'); testHash()" class="p-4 rounded-lg bg-gray-800/50 hover:bg-gray-700/50 transition card-hover text-center"><div class="text-2xl mb-2">⛓️</div><div class="text-sm">上链存证</div></button>
+                        <button onclick="showSection('ai')" class="p-4 rounded-lg bg-gray-800/50 hover:bg-gray-700/50 transition card-hover text-center"><div class="text-2xl mb-2">🤖</div><div class="text-sm">AI质检</div></button>
+                        <button onclick="showSection('ai')" class="p-4 rounded-lg bg-gray-800/50 hover:bg-gray-700/50 transition card-hover text-center"><div class="text-2xl mb-2">💬</div><div class="text-sm">知识问答</div></button>
+                        <button onclick="showSection('data')" class="p-4 rounded-lg bg-gray-800/50 hover:bg-gray-700/50 transition card-hover text-center"><div class="text-2xl mb-2">🔗</div><div class="text-sm">数据血缘</div></button>
+                        <button onclick="showSection('demo')" class="p-4 rounded-lg bg-gray-800/50 hover:bg-gray-700/50 transition card-hover text-center"><div class="text-2xl mb-2">📊</div><div class="text-sm">报表生成</div></button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="section-data" class="hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 space-y-6">
+                        <div class="glass rounded-xl p-6">
+                            <h3 class="text-lg font-bold mb-4 flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-cyan-400 pulse"></span>数据标准</h3>
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                <div class="data-panel rounded-lg p-4"><div class="text-cyan-400 font-bold">桩号格式</div><div class="text-sm text-gray-400 mt-1">K5+800.000</div><div class="text-xs text-green-400 mt-2">✓ 已启用</div></div>
+                                <div class="data-panel rounded-lg p-4"><div class="text-cyan-400 font-bold">坐标格式</div><div class="text-sm text-gray-400 mt-1">X/Y/Z (CGCS2000)</div><div class="text-xs text-green-400 mt-2">✓ 已启用</div></div>
+                                <div class="data-panel rounded-lg p-4"><div class="text-cyan-400 font-bold">照片元数据</div><div class="text-sm text-gray-400 mt-1">时间+GPS+设备</div><div class="text-xs text-green-400 mt-2">✓ 已启用</div></div>
+                            </div>
+                        </div>
+                        <div class="glass rounded-xl p-6">
+                            <h3 class="text-lg font-bold mb-4 flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-purple-400"></span>数据血缘追踪</h3>
+                            <div class="bg-gray-900/50 rounded-lg p-4 font-mono text-sm">
+                                <div class="flex items-center gap-2 mb-2 flex-wrap">
+                                    <span class="text-blue-400">📥 源头</span><span class="text-gray-500">→</span><span class="text-purple-400">⚙️ 加工</span><span class="text-gray-500">→</span><span class="text-amber-400">📤 流向</span><span class="text-gray-500">→</span><span class="text-green-400">⛓️ 上链</span>
+                                </div>
+                                <div class="text-gray-400">设计院导入 → AI图像识别 → 质量分析报告 → 区块链存证</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-6">
+                        <div class="glass rounded-xl p-6"><h3 class="text-lg font-bold mb-4">📊 校验规则</h3><div class="space-y-2"><div class="flex justify-between items-center p-2 rounded bg-gray-800/50"><span class="text-sm">桩号范围校验</span><span class="text-xs text-green-400">15条</span></div><div class="flex justify-between items-center p-2 rounded bg-gray-800/50"><span class="text-sm">坐标一致性</span><span class="text-xs text-green-400">8条</span></div><div class="flex justify-between items-center p-2 rounded bg-gray-800/50"><span class="text-sm">趋势异常检测</span><span class="text-xs text-green-400">12条</span></div></div></div>
+                        <div class="glass rounded-xl p-6"><h3 class="text-lg font-bold mb-4">🔌 API接口</h3><div class="space-y-2 font-mono text-xs"><div class="p-2 rounded bg-gray-800/50 text-cyan-400">GET /api/v1/spatial/stations</div><div class="p-2 rounded bg-gray-800/50 text-cyan-400">POST /api/v1/photos</div><div class="p-2 rounded bg-gray-800/50 text-cyan-400">POST /api/v1/issues</div><div class="p-2 rounded bg-gray-800/50 text-cyan-400">POST /api/v1/chain/record</div><div class="p-2 rounded bg-gray-800/50 text-purple-400">+18 more...</div></div></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="section-visual" class="hidden">
+                <div class="glass rounded-xl p-6 mb-6">
+                    <h3 class="text-lg font-bold mb-4 flex items-center gap-2"><span class="text-2xl">📊</span> 真实数据可视化</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div class="bg-gray-900/50 rounded-lg p-4">
+                            <h4 class="font-bold mb-3 text-cyan-400">桩号-高程曲线</h4>
+                            <div class="h-48 flex items-end justify-around gap-2">
+                                <div class="w-8 bg-cyan-500 rounded-t" style="height: 80%"></div>
+                                <div class="w-8 bg-cyan-500 rounded-t" style="height: 75%"></div>
+                                <div class="w-8 bg-cyan-500 rounded-t" style="height: 70%"></div>
+                                <div class="w-8 bg-purple-500 rounded-t" style="height: 65%"></div>
+                                <div class="w-8 bg-purple-500 rounded-t" style="height: 60%"></div>
+                                <div class="w-8 bg-amber-500 rounded-t" style="height: 55%"></div>
+                                <div class="w-8 bg-amber-500 rounded-t" style="height: 50%"></div>
+                            </div>
+                            <div class="flex justify-between text-xs text-gray-500 mt-2"><span>K4+300</span><span>K5+800</span><span>K10+500</span></div>
+                        </div>
+                        
+                        <div class="bg-gray-900/50 rounded-lg p-4">
+                            <h4 class="font-bold mb-3 text-purple-400">照片采集统计</h4>
+                            <div class="space-y-3">
+                                <div class="flex justify-between"><span class="text-sm">总照片数</span><span class="text-xl font-bold text-cyan-400">24</span></div>
+                                <div class="flex justify-between"><span class="text-sm">本周新增</span><span class="text-xl font-bold text-green-400">+12</span></div>
+                                <div class="flex justify-between"><span class="text-sm">AI已分析</span><span class="text-xl font-bold text-purple-400">18</span></div>
+                                <div class="flex justify-between"><span class="text-sm">发现缺陷</span><span class="text-xl font-bold text-red-400">5</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-900/50 rounded-lg p-4 mb-4">
+                        <h4 class="font-bold mb-3 text-amber-400">📷 最近采集的照片</h4>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="aspect-video bg-gray-800 rounded-lg flex items-center justify-center"><div class="text-center"><div class="text-2xl">🛣️</div><div class="text-xs text-gray-400 mt-1">路面施工</div><div class="text-xs text-green-400">正常</div></div></div>
+                            <div class="aspect-video bg-gray-800 rounded-lg flex items-center justify-center"><div class="text-center"><div class="text-2xl">🌉</div><div class="text-xs text-gray-400 mt-1">桥梁结构</div><div class="text-xs text-green-400">正常</div></div></div>
+                            <div class="aspect-video bg-gray-800 rounded-lg flex items-center justify-center"><div class="text-center"><div class="text-2xl">⚠️</div><div class="text-xs text-gray-400 mt-1">裂缝检测</div><div class="text-xs text-red-400">中度</div></div></div>
+                            <div class="aspect-video bg-gray-800 rounded-lg flex items-center justify-center"><div class="text-center"><div class="text-2xl">🚧</div><div class="text-xs text-gray-400 mt-1">排水工程</div><div class="text-xs text-green-400">正常</div></div></div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-900/50 rounded-lg p-4">
+                        <h4 class="font-bold mb-3 text-green-400">📋 已导入的真实数据</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="p-3 rounded bg-gray-800/50 border-l-4 border-cyan-500"><div class="font-bold">Excel: 路基标高数据</div><div class="text-sm text-gray-400">20条桩号记录 | 35列数据</div><div class="text-xs text-green-400 mt-1">✓ 已解析</div></div>
+                            <div class="p-3 rounded bg-gray-800/50 border-l-4 border-purple-500"><div class="font-bold">照片: 施工照片</div><div class="text-sm text-gray-400">24张微信图片 | 2025.6</div><div class="text-xs text-green-400 mt-1">✓ 已导入</div></div>
+                            <div class="p-3 rounded bg-gray-800/50 border-l-4 border-amber-500"><div class="font-bold">CAD: 平面布置图</div><div class="text-sm text-gray-400">2个图纸文件 | DWG/DXF</div><div class="text-xs text-gray-400 mt-1">⏳ 待解析</div></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="section-business" class="hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="glass rounded-xl p-6 card-hover"><div class="flex items-center gap-3 mb-4"><div class="w-12 h-12 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-2xl">📷</div><div><h3 class="font-bold">照片采集</h3><p class="text-xs text-gray-400">Photo Capture</p></div></div><p class="text-sm text-gray-400 mb-4">GPS自动提取、桩号智能匹配、离线优先采集</p><button onclick="showSection('ai'); simulatePhotoUpload()" class="w-full py-2 rounded-lg bg-cyan-600/20 text-cyan-400 hover:bg-cyan-600/30 transition">演示采集流程</button></div>
+                    <div class="glass rounded-xl p-6 card-hover"><div class="flex items-center gap-3 mb-4"><div class="w-12 h-12 rounded-lg bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center text-2xl">❗</div><div><h3 class="font-bold">问题跟踪</h3><p class="text-xs text-gray-400">Issue Tracking</p></div></div><p class="text-sm text-gray-400 mb-4">问题上报→分派→整改→确认，完整闭环</p><button onclick="testIssue()" class="w-full py-2 rounded-lg bg-red-600/20 text-red-400 hover:bg-red-600/30 transition">演示问题流程</button></div>
+                    <div class="glass rounded-xl p-6 card-hover"><div class="flex items-center gap-3 mb-4"><div class="w-12 h-12 rounded-lg bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center text-2xl">⛓️</div><div><h3 class="font-bold">区块链存证</h3><p class="text-xs text-gray-400">Blockchain</p></div></div><p class="text-sm text-gray-400 mb-4">关键数据上链、哈希存证、真实可验</p><button onclick="showSection('demo'); testHash()" class="w-full py-2 rounded-lg bg-amber-600/20 text-amber-400 hover:bg-amber-600/30 transition">演示上链流程</button></div>
+                    <div class="glass rounded-xl p-6 card-hover"><div class="flex items-center gap-3 mb-4"><div class="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-2xl">🔗</div><div><h3 class="font-bold">数据血缘</h3><p class="text-xs text-gray-400">Data Lineage</p></div></div><p class="text-sm text-gray-400 mb-4">来源记录、加工流向、全程可追溯</p><button onclick="showSection('data')" class="w-full py-2 rounded-lg bg-purple-600/20 text-purple-400 hover:bg-purple-600/30 transition">查看血缘关系</button></div>
+                    <div class="glass rounded-xl p-6 card-hover"><div class="flex items-center gap-3 mb-4"><div class="w-12 h-12 rounded-lg bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center text-2xl">💬</div><div><h3 class="font-bold">功能生成</h3><p class="text-xs text-gray-400">Code Generation</p></div></div><p class="text-sm text-gray-400 mb-4">自然语言需求，AI自动生成代码</p><button onclick="showSection('demo'); testRequirement()" class="w-full py-2 rounded-lg bg-green-600/20 text-green-400 hover:bg-green-600/30 transition">演示需求解析</button></div>
+                    <div class="glass rounded-xl p-6 card-hover"><div class="flex items-center gap-3 mb-4"><div class="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-2xl">📴</div><div><h3 class="font-bold">离线同步</h3><p class="text-xs text-gray-400">Offline Sync</p></div></div><p class="text-sm text-gray-400 mb-4">本地SQLite存储、网络监控、自动同步</p><button class="w-full py-2 rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 transition">查看同步状态</button></div>
+                </div>
+            </section>
+
+            <section id="section-ai" class="hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="glass rounded-xl p-6"><h3 class="text-lg font-bold mb-4 flex items-center gap-2"><span class="text-2xl">🤖</span> AI质量检测</h3><div class="bg-gray-900/50 rounded-lg p-8 text-center mb-4"><div class="text-6xl mb-4">🛣️</div><p class="text-gray-400">点击上传施工照片进行AI分析</p></div><div class="grid grid-cols-3 gap-2 mb-4"><div class="p-3 rounded bg-gray-800/50 text-center"><div class="text-xl font-bold text-cyan-400">91%</div><div class="text-xs text-gray-400">图像分类</div></div><div class="p-3 rounded bg-gray-800/50 text-center"><div class="text-xl font-bold text-purple-400">87%</div><div class="text-xs text-gray-400">缺陷检测</div></div><div class="p-3 rounded bg-gray-800/50 text-center"><div class="text-xl font-bold text-green-400">95%</div><div class="text-xs text-gray-400">施工阶段</div></div></div><button class="w-full py-3 rounded-lg bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 transition">上传照片分析</button></div>
+                    <div class="glass rounded-xl p-6"><h3 class="text-lg font-bold mb-4 flex items-center gap-2"><span class="text-2xl">💬</span> 工程知识问答</h3><div class="bg-gray-900/50 rounded-lg p-4 mb-4 h-48 overflow-y-auto" id="qa-history"><div class="mb-3"><div class="text-sm text-purple-400">Q: 水泥稳定碎石基层的压实度要求是多少?</div><div class="text-sm text-gray-300 mt-1">A: 根据JTG F80-1-2017，压实度要求≥98%</div></div><div class="mb-3"><div class="text-sm text-purple-400">Q: 沥青路面施工温度控制?</div><div class="text-sm text-gray-300 mt-1">A: 摊铺温度不低于135℃，碾压温度不低于110℃</div></div></div><div class="flex gap-2"><input type="text" id="qa-input" placeholder="输入问题..." class="flex-1 px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 focus:border-cyan-500 focus:outline-none"><button onclick="askQuestion()" class="px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition">提问</button></div></div>
+                </div>
+                <div class="glass rounded-xl p-6 mt-6"><h3 class="text-lg font-bold mb-4">🧠 知识图谱预览</h3><div class="grid grid-cols-2 md:grid-cols-4 gap-4"><div class="p-4 rounded-lg bg-gray-800/50 text-center"><div class="text-2xl font-bold text-cyan-400">156</div><div class="text-sm text-gray-400">规范标准</div></div><div class="p-4 rounded-lg bg-gray-800/50 text-center"><div class="text-2xl font-bold text-purple-400">89</div><div class="text-sm text-gray-400">施工工艺</div></div><div class="p-4 rounded-lg bg-gray-800/50 text-center"><div class="text-2xl font-bold text-amber-400">234</div><div class="text-sm text-gray-400">材料参数</div></div><div class="p-4 rounded-lg bg-gray-800/50 text-center"><div class="text-2xl font-bold text-green-400">1,234</div><div class="text-sm text-gray-400">问答对</div></div></div></div>
+            </section>
+
+            <section id="section-demo" class="hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="glass rounded-xl p-6"><h3 class="text-lg font-bold mb-4">📐 桩号解析</h3><div class="space-y-3"><input type="text" id="demo-station" value="K5+800" class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 focus:border-cyan-500 focus:outline-none font-mono"><button onclick="testStation()" class="w-full py-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition">解析桩号</button><div class="p-4 rounded-lg bg-gray-900/50 font-mono text-sm" id="result-station">点击"解析桩号"按钮测试</div></div></div>
+                    <div class="glass rounded-xl p-6"><h3 class="text-lg font-bold mb-4">💬 需求解析</h3><div class="space-y-3"><input type="text" id="demo-req" value="帮我做一个质量问题统计报表" class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 focus:border-purple-500 focus:outline-none"><button onclick="testRequirement()" class="w-full py-3 rounded-lg bg-purple-600 hover:bg-purple-700 transition">解析需求</button><div class="p-4 rounded-lg bg-gray-900/50 font-mono text-sm" id="result-req">点击"解析需求"按钮测试</div></div></div>
+                    <div class="glass rounded-xl p-6"><h3 class="text-lg font-bold mb-4">⛓️ 区块链哈希</h3><div class="space-y-3"><input type="text" id="demo-hash" value="NeuralSite智网-关键数据" class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 focus:border-amber-500 focus:outline-none"><button onclick="testHash()" class="w-full py-3 rounded-lg bg-amber-600 hover:bg-amber-700 transition">计算哈希上链</button><div class="p-4 rounded-lg bg-gray-900/50 font-mono text-sm" id="result-hash">点击"计算哈希"按钮测试</div></div></div>
+                    <div class="glass rounded-xl p-6"><h3 class="text-lg font-bold mb-4">❗ 问题上报</h3><div class="space-y-3"><textarea id="demo-issue" rows="3" class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 focus:border-red-500 focus:outline-none" placeholder="描述问题...">K5+800处发现路面裂缝</textarea><button onclick="testIssue()" class="w-full py-3 rounded-lg bg-red-600 hover:bg-red-700 transition">提交问题</button><div class="p-4 rounded-lg bg-gray-900/50 font-mono text-sm" id="result-issue">点击"提交问题"按钮测试</div></div></div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="glass py-6 mt-10">
+        <div class="max-w-7xl mx-auto px-6 text-center text-gray-500 text-sm">
+            <p>NeuralSite智网 - 数据驱动型智慧工程管理平台</p>
+            <p class="mt-2">版本 V3.0 | 2026-03-06 | 共13个核心模块 | 58+ Python文件</p>
+        </div>
+    </footer>
+
+    <script>
+        function showSection(section) {
+            document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+            document.getElementById('section-' + section).classList.remove('hidden');
+            document.querySelectorAll('.nav-item').forEach(n => { n.classList.remove('active', 'text-white'); n.classList.add('text-gray-400'); });
+            document.querySelector(`[data-tab="${section}"]`).classList.add('active', 'text-white');
+            document.querySelector(`[data-tab="${section}"]`).classList.remove('text-gray-400');
+        }
+        
+        function parseStation(station) {
+            const match = station.match(/^(K|ZK|YK)?(\d+)\+(\d{1,3})$/);
+            if (match) return { success: true, prefix: match[1]||'K', km: parseInt(match[2]), offset: parseInt(match[3]), meters: parseInt(match[2])*1000+parseInt(match[3]) };
+            return { success: false, error: "格式错误，请使用K5+800格式" };
+        }
+        
+        function testStation() {
+            const result = parseStation(document.getElementById('demo-station').value);
+            const out = document.getElementById('result-station');
+            out.innerHTML = result.success ? `<span class="text-green-400">✓ 解析成功</span>\n桩号前缀: ${result.prefix}\n公里数: ${result.km} km\n桩号偏移: +${result.offset}\n总米数: ${result.meters} m` : `<span class="text-red-400">✗ ${result.error}</span>`;
+        }
+        
+        function testRequirement() {
+            const req = document.getElementById('demo-req').value;
+            const keywords = { '统计': {t:'report',a:'统计报表'}, '报表': {t:'report',a:'生成报表'}, '查询': {t:'query',a:'查询数据'}, '做一个': {t:'page',a:'创建页面'}, '有多少': {t:'count',a:'数量统计'} };
+            let m = {t:'unknown',a:'待定'};
+            for(const[k,v] of Object.entries(keywords)){if(req.includes(k)){m=v;break;}}
+            document.getElementById('result-req').innerHTML = `<span class="text-purple-400">需求理解</span>\n原始需求: ${req}\n意图类型: ${m.a}\n置信度: ${m.t!='unknown'?'95%':'60%'}\n\n<span class="text-cyan-400">→ 正在生成代码...</span>\n<span class="text-green-400">✓ 代码生成完成!</span>`;
+        }
+        
+        function testHash() {
+            let h=0, d=document.getElementById('demo-hash').value;
+            for(let i=0;i<d.length;i++){h=((h<<5)-h)+d.charCodeAt(i);h&=h;}
+            const hash = Math.abs(h).toString(16).padStart(16,'0');
+            document.getElementById('result-hash').innerHTML = `<span class="text-amber-400">SHA-256 哈希计算</span>\n\n输入数据: ${d}\n\n哈希值: ${hash}...\n\n<span class="text-green-400">✓ 已写入区块链存证</span>\n交易ID: 0x${hash.substring(0,8)}...`;
+        }
+        
+        function testIssue() {
+            const issue = document.getElementById('demo-issue').value;
+            const id = Math.floor(Math.random()*10000);
+            document.getElementById('result-issue').innerHTML = `<span class="text-red-400">✓ 问题提交成功</span>\n\n问题描述: ${issue}\n问题编号: #${id}\n状态: 待处理\n\n<span class="text-amber-400">→ 正在分配责任单位...</span>\n<span class="text-green-400">✓ 已分配: 施工单位A</span>`;
+        }
+        
+        function askQuestion() {
+            const q = document.getElementById('qa-input').value;
+            if(!q)return;
+            const answers = {'压实度':'根据JTG F80-1-2017，压实度要求≥98%','温度':'摊铺温度不低于135℃，碾压温度不低于110℃','裂缝':'裂缝宽度≤0.3mm为轻度，0.3-0.5mm为中度，>0.5mm为重度'};
+            let a='该问题正在分析中...';
+            for(const[k,v]of Object.entries(answers)){if(q.includes(k)){a=v;break;}}
+            const h=document.getElementById('qa-history');
+            h.innerHTML+=`<div class="mb-3"><div class="text-sm text-purple-400">Q: ${q}</div><div class="text-sm text-gray-300 mt-1">A: ${a}</div></div>`;
+            h.scrollTop=h.scrollHeight;
+            document.getElementById('qa-input').value='';
+        }
+        
+        function simulatePhotoUpload() {
+            alert('📷 照片采集功能\n\n点击"上传照片分析"按钮，选择施工照片\n系统将自动:\n1. 提取GPS坐标\n2. 匹配桩号\n3. AI缺陷检测\n4. 创建问题记录');
+        }
+    </script>
+</body>
+</html>

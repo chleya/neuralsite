@@ -1,0 +1,185 @@
+# -*- coding: utf-8 -*-
+"""
+图表页面模板
+"""
+
+CHART_PAGE_TEMPLATE = '''
+<template>
+  <div class="{{ class_name }}">
+    <!-- 筛选条件 -->
+    <el-card class="filter-card" v-if="showFilter">
+      <el-form :model="filterForm" inline>
+        {%- for field in filter_fields %}
+        <el-form-item label="{{ field.label }}">
+          <el-select v-model="filterForm.{{ field.name }}" placeholder="请选择" clearable>
+            {%- for option in field.options %}
+            <el-option label="{{ option.label }}" value="{{ option.value }}" />
+            {%- endfor %}
+          </el-select>
+        </el-form-item>
+        {%- endfor %}
+        <el-form-item>
+          <el-button type="primary" @click="handleFilter">查询</el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
+    
+    <!-- 图表展示 -->
+    <el-row :gutter="20">
+      <el-col :span="24">
+        <el-card>
+          <div ref="chartRef" style="width: 100%; height: 400px;"></div>
+        </el-card>
+      </el-col>
+    </el-row>
+    
+    <!-- 数据表格 -->
+    <el-card style="margin-top: 20px;">
+      <el-table :data="tableData" v-loading="loading">
+        {%- for field in table_fields %}
+        <el-table-column prop="{{ field.name }}" label="{{ field.label }}" />
+        {%- endfor %}
+      </el-table>
+    </el-card>
+  </div>
+</template>
+
+<script setup>
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import * as echarts from 'echarts'
+import { ElMessage } from 'element-plus'
+
+// 图表实例
+let chartInstance = null
+const chartRef = ref(null)
+
+// 状态
+const loading = ref(false)
+const showFilter = ref(true)
+const tableData = ref([])
+
+// 筛选表单
+const filterForm = reactive({
+  {%- for field in filter_fields %}
+  {{ field.name }}: '',
+  {%- endfor %}
+})
+
+// 图表配置
+const chartOption = ref({})
+
+// 表格字段
+const tableFields = {{ table_fields | tojson }}
+
+// 加载图表数据
+async function loadChartData() {
+  loading.value = true
+  try {
+    const params = { ...filterForm }
+    const res = await api.get{{ table_name | capitalize }}Chart(params)
+    
+    // 根据图表类型构建配置
+    {%- if chart_type == "line" %}
+    chartOption.value = {
+      title: { text: '{{ title }}' },
+      tooltip: { trigger: 'axis' },
+      legend: { data: ['数量'] },
+      xAxis: { 
+        type: 'category', 
+        data: res.data.x 
+      },
+      yAxis: { type: 'value' },
+      series: [{
+        name: '数量',
+        type: 'line',
+        data: res.data.y,
+        smooth: true
+      }]
+    }
+    {%- elif chart_type == "pie" %}
+    chartOption.value = {
+      title: { text: '{{ title }}' },
+      tooltip: { trigger: 'item' },
+      legend: { orient: 'vertical', left: 'left' },
+      series: [{
+        type: 'pie',
+        radius: '60%',
+        data: res.data,
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
+          }
+        }
+      }]
+    }
+    {%- else %}  {# bar #}
+    chartOption.value = {
+      title: { text: '{{ title }}' },
+      tooltip: { trigger: 'axis' },
+      xAxis: { 
+        type: 'category', 
+        data: res.data.x 
+      },
+      yAxis: { type: 'value' },
+      series: [{
+        type: 'bar',
+        data: res.data.y,
+        itemStyle: {
+          color: '#409EFF'
+        }
+      }]
+    }
+    {%- endif %}
+    
+    // 更新图表
+    if (chartInstance) {
+      chartInstance.setOption(chartOption.value)
+    }
+    
+    // 加载表格数据
+    tableData.value = res.data.raw_data || []
+  } catch (error) {
+    ElMessage.error('加载失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 筛选
+function handleFilter() {
+  loadChartData()
+}
+
+// 初始化图表
+function initChart() {
+  if (chartRef.value) {
+    chartInstance = echarts.init(chartRef.value)
+    window.addEventListener('resize', () => {
+      chartInstance.resize()
+    })
+  }
+}
+
+onMounted(() => {
+  initChart()
+  loadChartData()
+})
+
+onUnmounted(() => {
+  if (chartInstance) {
+    chartInstance.dispose()
+  }
+})
+</script>
+
+<style scoped>
+.{{ class_name }} {
+  padding: 20px;
+}
+.filter-card {
+  margin-bottom: 20px;
+}
+</style>
+'''
