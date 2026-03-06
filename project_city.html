@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuralSite 数据城市</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        
+        #canvas {
+            display: block;
+        }
+        
+        #ui {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: white;
+            z-index: 100;
+        }
+        
+        #title {
+            font-size: 28px;
+            font-weight: bold;
+            text-shadow: 0 0 20px rgba(0,200,255,0.5);
+            margin-bottom: 10px;
+        }
+        
+        #stats {
+            background: rgba(0,0,0,0.6);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .stat-item {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        
+        .stat-label { color: #888; }
+        .stat-value { color: #00d4ff; font-weight: bold; }
+        
+        #legend {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            font-size: 12px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+        
+        .legend-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <div id="ui">
+        <div id="title">🏙️ NeuralSite 数据城市</div>
+        <div id="stats">
+            <div class="stat-item">
+                <span class="stat-label">🚗 运输中:</span>
+                <span class="stat-value" id="vehicle-count">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">🏠 建筑:</span>
+                <span class="stat-value" id="building-count">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">📦 已处理:</span>
+                <span class="stat-value" id="processed-count">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">⏱️ 运行时间:</span>
+                <span class="stat-value" id="runtime">0s</span>
+            </div>
+        </div>
+    </div>
+    
+    <div id="legend">
+        <div class="legend-item"><div class="legend-icon" style="background:#ff6b6b"></div>🏠 建筑(功能模块)</div>
+        <div class="legend-item"><div class="legend-icon" style="background:#4ecdc4"></div>🚗 数据车(流动中)</div>
+        <div class="legend-item"><div class="legend-icon" style="background:#45b7d1"></div>🛣️ 道路(数据流)</div>
+        <div class="legend-item"><div class="legend-icon" style="background:#f9ca24"></div>📦 货物(数据包)</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 响应式画布
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resize();
+        window.addEventListener('resize', resize);
+        
+        // 建筑定义
+        const buildings = [
+            { name: 'IFC读取', x: 0.2, y: 0.3, w: 120, h: 80, color: '#ff6b6b', icon: '📥' },
+            { name: '4D调度', x: 0.5, y: 0.25, w: 120, h: 80, color: '#ff6b6b', icon: '📅' },
+            { name: '事件处理', x: 0.8, y: 0.3, w: 120, h: 80, color: '#ff6b6b', icon: '⚡' },
+            { name: 'API服务', x: 0.35, y: 0.6, w: 140, h: 90, color: '#ff6b6b', icon: '🌐' },
+            { name: '可视化', x: 0.65, y: 0.6, w: 140, h: 90, color: '#ff6b6b', icon: '📊' },
+        ];
+        
+        // 道路定义 (连接点)
+        const roads = [
+            { from: '入口', to: 'IFC读取' },
+            { from: 'IFC读取', to: '4D调度' },
+            { from: '4D调度', to: '事件处理' },
+            { from: '事件处理', to: 'API服务' },
+            { from: 'API服务', to: '可视化' },
+            { from: '可视化', to: '出口' },
+        ];
+        
+        // 车辆/数据包
+        const vehicles = [];
+        let processedCount = 0;
+        let startTime = Date.now();
+        
+        // 数据包类
+        class Vehicle {
+            constructor(from, to) {
+                this.from = from;
+                this.to = to;
+                this.progress = 0;
+                this.speed = 0.005 + Math.random() * 0.005;
+                this.size = 15 + Math.random() * 10;
+                this.color = '#4ecdc4';
+                this.packageColor = '#f9ca24';
+            }
+            
+            update() {
+                this.progress += this.speed;
+                if (this.progress >= 1) {
+                    processedCount++;
+                    return true; // 到达目的地
+                }
+                return false;
+            }
+            
+            draw() {
+                // 获取起点和终点坐标
+                const fromPt = this.getPosition(this.from);
+                const toPt = this.getPosition(this.to);
+                
+                if (!fromPt || !toPt) return;
+                
+                // 线性插值
+                const x = fromPt.x + (toPt.x - fromPt.x) * this.progress;
+                const y = fromPt.y + (toPt.y - fromPt.y) * this.progress;
+                
+                // 绘制道路连线
+                ctx.strokeStyle = '#45b7d1';
+                ctx.lineWidth = 4;
+                ctx.globalAlpha = 0.3;
+                ctx.beginPath();
+                ctx.moveTo(fromPt.x, fromPt.y);
+                ctx.lineTo(toPt.x, toPt.y);
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+                
+                // 绘制车辆
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(x, y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 绘制货物
+                ctx.fillStyle = this.packageColor;
+                ctx.beginPath();
+                ctx.arc(x + 3, y - 3, this.size * 0.4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 光芒效果
+                ctx.shadowColor = this.color;
+                ctx.shadowBlur = 15;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+            
+            getPosition(name) {
+                if (name === '入口') return { x: canvas.width * 0.1, y: canvas.height * 0.15 };
+                if (name === '出口') return { x: canvas.width * 0.9, y: canvas.height * 0.85 };
+                
+                for (let b of buildings) {
+                    if (b.name === name) {
+                        return { x: canvas.width * b.x, y: canvas.height * b.y };
+                    }
+                }
+                return null;
+            }
+        }
+        
+        // 绘制建筑
+        function drawBuildings() {
+            buildings.forEach(b => {
+                const x = canvas.width * b.x - b.w/2;
+                const y = canvas.height * b.y - b.h/2;
+                
+                // 建筑阴影
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.fillRect(x + 5, y + 5, b.w, b.h);
+                
+                // 建筑主体
+                const gradient = ctx.createLinearGradient(x, y, x, y + b.h);
+                gradient.addColorStop(0, b.color);
+                gradient.addColorStop(1, '#c0392b');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(x, y, b.w, b.h);
+                
+                // 建筑边框
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x, y, b.w, b.h);
+                
+                // 建筑名称
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 14px Microsoft YaHei';
+                ctx.textAlign = 'center';
+                ctx.fillText(b.icon + ' ' + b.name, x + b.w/2, y + b.h/2 - 5);
+                
+                // 窗户效果
+                ctx.fillStyle = '#ffeaa7';
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 2; j++) {
+                        ctx.fillRect(x + 15 + i * 35, y + 20 + j * 25, 20, 15);
+                    }
+                }
+            });
+        }
+        
+        // 绘制入口和出口
+        function drawTerminals() {
+            // 入口
+            const inX = canvas.width * 0.1;
+            const inY = canvas.height * 0.15;
+            ctx.fillStyle = '#2ecc71';
+            ctx.beginPath();
+            ctx.moveTo(inX, inY - 20);
+            ctx.lineTo(inX + 20, inY);
+            ctx.lineTo(inX, inY + 20);
+            ctx.closePath();
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.font = '12px Microsoft YaHei';
+            ctx.fillText('数据入口', inX, inY - 30);
+            
+            // 出口
+            const outX = canvas.width * 0.9;
+            const outY = canvas.height * 0.85;
+            ctx.fillStyle = '#9b59b6';
+            ctx.beginPath();
+            ctx.moveTo(outX, outY - 20);
+            ctx.lineTo(outX - 20, outY);
+            ctx.lineTo(outX, outY + 20);
+            ctx.closePath();
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.fillText('输出展示', outX, outY + 40);
+        }
+        
+        // 绘制连接道路
+        function drawRoads() {
+            ctx.strokeStyle = '#45b7d1';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([10, 10]);
+            
+            roads.forEach(r => {
+                const from = vehicles[0]?.getPosition(r.from) || {x:0,y:0};
+                const to = vehicles[0]?.getPosition(r.to);
+                if (to) {
+                    // 重新计算每个建筑的位置
+                    const fromPt = { 
+                        x: r.from === '入口' ? canvas.width * 0.1 : buildings.find(b=>b.name===r.from)?.x * canvas.width || 0,
+                        y: r.from === '入口' ? canvas.height * 0.15 : buildings.find(b=>b.name===r.from)?.y * canvas.height || 0
+                    };
+                    const toPt = { 
+                        x: r.to === '出口' ? canvas.width * 0.9 : buildings.find(b=>b.name===r.to)?.x * canvas.width || 0,
+                        y: r.to === '出口' ? canvas.height * 0.85 : buildings.find(b=>b.name===r.to)?.y * canvas.height || 0
+                    };
+                }
+            });
+            
+            ctx.setLineDash([]);
+        }
+        
+        // 动画循环
+        function animate() {
+            // 背景
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 网格效果
+            ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < canvas.width; i += 40) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+            }
+            for (let i = 0; i < canvas.height; i += 40) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(canvas.width, i);
+                ctx.stroke();
+            }
+            
+            // 绘制元素
+            drawTerminals();
+            drawBuildings();
+            
+            // 更新和绘制车辆
+            for (let i = vehicles.length - 1; i >= 0; i--) {
+                const v = vehicles[i];
+                const arrived = v.update();
+                v.draw();
+                
+                if (arrived) {
+                    vehicles.splice(i, 1);
+                }
+            }
+            
+            // 随机生成新车辆
+            if (vehicles.length < 8 && Math.random() < 0.03) {
+                const routes = [
+                    ['入口', 'IFC读取'],
+                    ['IFC读取', '4D调度'],
+                    ['4D调度', '事件处理'],
+                    ['事件处理', 'API服务'],
+                    ['API服务', '可视化'],
+                    ['可视化', '出口'],
+                ];
+                const route = routes[Math.floor(Math.random() * routes.length)];
+                vehicles.push(new Vehicle(route[0], route[1]));
+            }
+            
+            // 更新UI
+            document.getElementById('vehicle-count').textContent = vehicles.length;
+            document.getElementById('building-count').textContent = buildings.length;
+            document.getElementById('processed-count').textContent = processedCount;
+            document.getElementById('runtime').textContent = Math.floor((Date.now() - startTime)/1000) + 's';
+            
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+    </script>
+</body>
+</html>
