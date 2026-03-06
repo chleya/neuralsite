@@ -688,4 +688,127 @@ class ApiService {
       return {'status': 'error', 'message': e.toString()};
     }
   }
+
+  // ==================== Offline Data Preload Operations ====================
+
+  /// 获取桩号映射数据
+  static Future<Map<String, dynamic>> getStationMappings({
+    required String projectId,
+    double? startKm,
+    double? endKm,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/v1/offline/station-mappings'),
+        headers: _headers,
+        body: jsonEncode({
+          'project_id': projectId,
+          if (startKm != null) 'start_km': startKm,
+          if (endKm != null) 'end_km': endKm,
+        }),
+      );
+      
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Failed to get station mappings: ${response.statusCode}');
+      }
+    } catch (e) {
+      return {'status': 'error', 'message': e.toString()};
+    }
+  }
+
+  /// 获取材料标准数据
+  static Future<Map<String, dynamic>> getMaterialStandards({
+    String? projectId,
+    String? category,
+  }) async {
+    try {
+      final queryParams = <String>[];
+      if (projectId != null) queryParams.add('project_id=$projectId');
+      if (category != null) queryParams.add('category=$category');
+      
+      final url = queryParams.isNotEmpty 
+          ? '$baseUrl/api/v1/offline/material-standards?${queryParams.join('&')}'
+          : '$baseUrl/api/v1/offline/material-standards';
+      
+      final response = await http.get(Uri.parse(url), headers: _headers);
+      
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Failed to get material standards: ${response.statusCode}');
+      }
+    } catch (e) {
+      return {'status': 'error', 'message': e.toString()};
+    }
+  }
+
+  /// 获取FAQ数据
+  static Future<Map<String, dynamic>> getFaqs({
+    String? projectId,
+    String? category,
+  }) async {
+    try {
+      final queryParams = <String>[];
+      if (projectId != null) queryParams.add('project_id=$projectId');
+      if (category != null) queryParams.add('category=$category');
+      
+      final url = queryParams.isNotEmpty 
+          ? '$baseUrl/api/v1/offline/faqs?${queryParams.join('&')}'
+          : '$baseUrl/api/v1/offline/faqs';
+      
+      final response = await http.get(Uri.parse(url), headers: _headers);
+      
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Failed to get FAQs: ${response.statusCode}');
+      }
+    } catch (e) {
+      return {'status': 'error', 'message': e.toString()};
+    }
+  }
+
+  /// 下载图纸
+  static Future<Map<String, dynamic>> downloadDrawings({required String projectId}) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/v1/offline/drawings?project_id=$projectId'),
+        headers: _headers,
+      );
+      
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Failed to download drawings: ${response.statusCode}');
+      }
+    } catch (e) {
+      return {'status': 'error', 'message': e.toString()};
+    }
+  }
+
+  /// 下载规范条文
+  static Future<Map<String, dynamic>> downloadSpecifications({
+    required String projectId,
+    String? category,
+  }) async {
+    try {
+      final queryParams = <String>['project_id=$projectId'];
+      if (category != null) queryParams.add('category=$category');
+      
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/v1/offline/specifications?${queryParams.join('&')}'),
+        headers: _headers,
+      );
+      
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Failed to download specifications: ${response.statusCode}');
+      }
+    } catch (e) {
+      return {'status': 'error', 'message': e.toString()};
+    }
+  }
 }

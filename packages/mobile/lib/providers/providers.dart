@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:uuid/uuid.dart';
 import '../db/database_helper.dart';
+import '../db/offline_database_helper.dart';
 import '../models/models.dart';
 import '../services/location_service.dart';
 import '../services/camera_service.dart';
 import '../services/sync_service.dart';
 import '../services/api_service.dart';
+import '../services/offline_data_service.dart';
 
 // ==================== Core Providers ====================
 
@@ -418,3 +420,81 @@ final offlineModeProvider = StateProvider<bool>((ref) => true);
 
 /// Auto sync enabled provider
 final autoSyncProvider = StateProvider<bool>((ref) => true);
+
+// ==================== Offline Data Providers ====================
+
+import '../services/offline_data_service.dart';
+import '../db/offline_database_helper.dart';
+
+/// Offline data service provider
+final offlineDataServiceProvider = Provider<OfflineDataService>((ref) {
+  return OfflineDataService.instance;
+});
+
+/// Station search provider
+final stationSearchProvider = FutureProvider.family<List<StationSearchResult>, String>((ref, query) async {
+  final offlineService = ref.watch(offlineDataServiceProvider);
+  final projectId = ref.watch(selectedProjectIdProvider);
+  
+  if (query.isEmpty) return [];
+  
+  return await offlineService.searchStations(
+    query,
+    projectId: projectId,
+    limit: 20,
+  );
+});
+
+/// Nearest station provider
+final nearestStationProvider = FutureProvider.family<StationSearchResult?, ({double lat, double lon})>((ref, coords) async {
+  final offlineService = ref.watch(offlineDataServiceProvider);
+  final projectId = ref.watch(selectedProjectIdProvider);
+  
+  return await offlineService.getNearestStation(
+    coords.lat,
+    coords.lon,
+    projectId: projectId,
+  );
+});
+
+/// Material search provider
+final materialSearchProvider = FutureProvider.family<List<MaterialStandard>, String>((ref, query) async {
+  final offlineService = ref.watch(offlineDataServiceProvider);
+  
+  if (query.isEmpty) return [];
+  
+  return await offlineService.searchMaterials(query, limit: 20);
+});
+
+/// Material categories provider
+final materialCategoriesProvider = FutureProvider<List<String>>((ref) async {
+  final offlineService = ref.watch(offlineDataServiceProvider);
+  return await offlineService.getMaterialCategories();
+});
+
+/// FAQ search provider
+final faqSearchProvider = FutureProvider.family<List<FaqItem>, String>((ref, query) async {
+  final offlineService = ref.watch(offlineDataServiceProvider);
+  
+  if (query.isEmpty) return [];
+  
+  return await offlineService.searchFaqs(query, limit: 20);
+});
+
+/// FAQ categories provider
+final faqCategoriesProvider = FutureProvider<List<String>>((ref) async {
+  final offlineService = ref.watch(offlineDataServiceProvider);
+  return await offlineService.getFaqCategories();
+});
+
+/// User role provider
+final userRoleProvider = FutureProvider<UserRole>((ref) async {
+  final offlineService = ref.watch(offlineDataServiceProvider);
+  return await offlineService.getUserRole();
+});
+
+/// Project phase provider
+final projectPhaseProvider = FutureProvider<ProjectPhase>((ref) async {
+  final offlineService = ref.watch(offlineDataServiceProvider);
+  return await offlineService.getProjectPhase();
+});

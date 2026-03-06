@@ -4,7 +4,7 @@ NeuralSite Core API
 FastAPI入口
 """
 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Response
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 
@@ -45,6 +45,9 @@ except ImportError as e:
 
 # 依赖注入
 from api.dependencies import get_feature_flags, get_settings
+
+# 监控指标
+from core.monitoring import get_metrics
 
 
 # 创建应用
@@ -133,6 +136,12 @@ async def list_features(feature_flags = Depends(get_feature_flags)):
     return {
         "features": feature_flags.get_all()
     }
+
+
+@app.get("/metrics")
+async def metrics():
+    """Prometheus 监控指标端点"""
+    return Response(content=get_metrics(), media_type="text/plain")
 
 
 if __name__ == "__main__":

@@ -11,16 +11,17 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.2
   
-  # State Management
-  provider: ^6.0.5
+  # State Management - Using Riverpod (per ARCHITECTURE.md)
+  flutter_riverpod: ^2.4.9
   
   # Network
   http: ^1.1.0
-  dio: ^5.4.0
+  connectivity_plus: ^5.0.0
   
   # Local Storage
   sqflite: ^2.3.0
   path: ^1.8.3
+  path_provider: ^2.1.1
   
   # Location & Maps
   geolocator: ^10.1.0
@@ -29,9 +30,19 @@ dependencies:
   # Image
   image_picker: ^1.0.4
   
+  # Background Sync (WorkManager)
+  workmanager: ^0.5.2
+  
+  # File handling for chunked uploads
+  dio: ^5.4.0
+  
+  # Cache management
+  flutter_cache_manager: ^3.3.1
+  
   # Utils
   intl: ^0.18.1
   uuid: ^4.2.1
+  crypto: ^3.0.3
 
 dev_dependencies:
   flutter_test:

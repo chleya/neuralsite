@@ -4,8 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'models/models.dart';
 import 'providers/providers.dart';
+import 'services/offline_data_initializer.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // 初始化示例离线数据（首次启动时）
+  await OfflineDataInitializer.instance.initializeSampleData();
+  
   runApp(const ProviderScope(child: NeuralSiteApp()));
 }
 

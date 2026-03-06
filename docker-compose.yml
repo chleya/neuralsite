@@ -1,187 +1,162 @@
-# =============================================================================
-# NeuralSite V2.0 Docker Compose
-# 启动命令: docker-compose up -d
-# =============================================================================
-
 version: '3.8'
 
 services:
-  # ---------------------------------------------------------------------------
-  # PostgreSQL + PostGIS
-  # ---------------------------------------------------------------------------
+  # PostgreSQL + PostGIS 空间数据库
   postgres:
     image: postgis/postgis:15-3.3
     container_name: neuralsite-postgres
     environment:
       POSTGRES_DB: neuralsite
       POSTGRES_USER: neuralsite
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      POSTGRES_PASSWORD: neuralsite123
     ports:
       - "5432:5432"
-    networks:
-      - neuralsite-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U neuralsite"]
       interval: 10s
       timeout: 5s
       retries: 5
-    restart: unless-stopped
 
-  # ---------------------------------------------------------------------------
-  # Neo4j 图数据库
-  # ---------------------------------------------------------------------------
-  neo4j:
-    image: neo4j:5.11-community
-    container_name: neuralsite-neo4j
-    environment:
-      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:-password}
-      NEO4J_server_memory_heap_initial__size: 512m
-      NEO4J_server_memory_heap_max__size: 2G
-      NEO4J_server_default__listen__address: 0.0.0.0
-    volumes:
-      - neo4j_data:/data
-      - neo4j_logs:/logs
-    ports:
-      - "7474:7474"
-      - "7687:7687"
-    networks:
-      - neuralsite-network
-    restart: unless-stopped
-
-  # ---------------------------------------------------------------------------
   # Redis 缓存
-  # ---------------------------------------------------------------------------
   redis:
     image: redis:7-alpine
     container_name: neuralsite-redis
-    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
-    volumes:
-      - redis_data:/data
+    command: redis-server --appendonly yes
     ports:
       - "6379:6379"
-    networks:
-      - neuralsite-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-  # ---------------------------------------------------------------------------
-  # Backend API
-  # ---------------------------------------------------------------------------
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: neuralsite-backend
-    environment:
-      # Database
-      DATABASE_URL: postgresql://neuralsite:${POSTGRES_PASSWORD:-password}@postgres:5432/neuralsite
-      # Neo4j
-      NEO4J_URI: bolt://neo4j:7687
-      NEO4J_USER: neo4j
-      NEO4J_PASSWORD: ${NEO4J_PASSWORD:-password}
-      # Redis
-      REDIS_URL: redis://redis:6379/0
-      # JWT
-      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-in-production}
-      # Python
-      PYTHONDONTWRITEBYTECODE: "1"
-      PYTHONUNBUFFERED: "1"
-      PYTHON_ENV: production
     volumes:
-      - ./packages/core:/app/packages/core
-      - uploads:/app/uploads
+      - redis_data:/data
+
+  # Neo4j 图数据库
+  neo4j:
+    image: neo4j:5
+    container_name: neuralsite-neo4j
+    environment:
+      NEO4J_AUTH: neo4j/password
+      NEO4J_PLUGINS: '["apoc"]'
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider localhost:7474 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      - postgres
+
+  # NeuralSite Core API
+  api:
+    build:
+      context: ./packages/core
+      dockerfile: Dockerfile
+    container_name: neuralsite-api
     ports:
       - "8000:8000"
-    networks:
-      - neuralsite-network
+    environment:
+      - DATABASE_URL=postgresql://neuralsite:neuralsite123@postgres:5432/neuralsite
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=password
+      - REDIS_URL=redis://redis:6379/0
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./packages/core:/app
     depends_on:
       postgres:
         condition: service_healthy
+      neo4j:
+        condition: service_healthy
       redis:
         condition: service_started
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
     restart: unless-stopped
 
-  # ---------------------------------------------------------------------------
-  # Nginx Reverse Proxy
-  # ---------------------------------------------------------------------------
-  nginx:
-    image: nginx:alpine
-    container_name: neuralsite-nginx
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      # Static frontend files
-      - frontend_static:/usr/share/nginx/html:ro
+  # NeuralSite Studio (Frontend)
+  web:
+    build:
+      context: ./packages/studio
+    container_name: neuralsite-web
     ports:
-      - "80:80"
-      # Uncomment for HTTPS in production
-      # - "443:443"
-    networks:
-      - neuralsite-network
+      - "5173:5173"
+    volumes:
+      - ./packages/studio:/app
+      - /app/node_modules
     depends_on:
-      - backend
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      - api
     restart: unless-stopped
 
-# =============================================================================
-# Networks
-# =============================================================================
-networks:
-  neuralsite-network:
-    driver: bridge
+  # Prometheus 监控系统
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: neuralsite-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    depends_on:
+      - api
 
-# =============================================================================
-# Volumes
-# =============================================================================
+  # Grafana 可视化仪表板
+  grafana:
+    image: grafana/grafana:10.2.2
+    container_name: neuralsite-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    volumes:
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+      - grafana_data:/var/lib/grafana
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+
+  # Loki 日志聚合系统
+  loki:
+    image: grafana/loki:2.9.2
+    container_name: neuralsite-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./monitoring/loki:/etc/loki
+      - loki_data:/loki
+    command: -config.file=/etc/loki/loki-config.yml
+    restart: unless-stopped
+
+  # Promtail 日志收集代理
+  promtail:
+    image: grafana/promtail:2.9.2
+    container_name: neuralsite-promtail
+    volumes:
+      - ./packages/core:/var/log/neuralsite
+      - ./monitoring/promtail:/etc/promtail
+    command: -config.file=/etc/promtail/promtail-config.yml
+    restart: unless-stopped
+    depends_on:
+      - loki
+
 volumes:
   postgres_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${DATA_PATH:-./data}/postgres-data
   neo4j_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${DATA_PATH:-./data}/neo4j-data
-  neo4j_logs:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${DATA_PATH:-./data}/neo4j-logs
   redis_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${DATA_PATH:-./data}/redis-data
-  frontend_static:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${FRONTEND_PATH:-./packages/studio/dist}
-  uploads:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${DATA_PATH:-./data}/uploads
+  prometheus_data:
+  grafana_data:
+  loki_data:
